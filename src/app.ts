@@ -1,6 +1,7 @@
 import "reflect-metadata"
 import express from 'express';
 import AppDataSource from "./config";
+import {eventsRoutes} from "./events/routes"
 import cors from "cors";
 import dotenv from "dotenv"
 import bcrypt from "bcrypt";
@@ -16,9 +17,7 @@ app.use(
     })
 );
 dotenv.config();
-// app.post('/registration', async (req, resp) => {
- 
-// });
+app.use('/api/v1/events',eventsRoutes);
 
 const generateAccessToken = (user:User):String =>{
     const id = user.user_id;
