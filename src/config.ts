@@ -1,5 +1,5 @@
 import { DataSource } from "typeorm";
-import Tables from "./entities";
+import Tables from "./Entities";
 const AppDataSource = new DataSource({
     type: "postgres",
     host: "localhost",
