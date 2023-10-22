@@ -31,7 +31,7 @@ const generateAccessToken = (user: User): String => {
     return jwt.sign(
         { id: id },
         process.env.TOKEN_SECRET || "",
-        { expiresIn: "20s" }
+        { expiresIn: "20h" }
     )
 }
 
@@ -177,14 +177,18 @@ const nearestCadet = (user:User) =>{
 }
 
 app.get('/getCadet/:userId', async(req, res) => {
-    const cadetRepo = AppDataSource.getRepository(Cadet)
-    cadets = await cadetRepo.find();
     
     const userRepo = AppDataSource.getRepository(User)
     const userId = req.params.userId;
     const user = await userRepo.findOne({
         where: {user_id: userId}
     });
+    
+    const cadetRepo = AppDataSource.getRepository(Cadet)
+    cadets = await cadetRepo.find({
+        where: {city: user?.city}
+    });
+
     const nearestCadet_id = await nearestCadet(user as User)
     res.json({"cadet": nearestCadet_id, "user id": userId})
 })
