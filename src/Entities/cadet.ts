@@ -1,9 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
-@Entity({ name: "User" })
-export class User {
+@Entity({ name: "Cadets" })
+export class Cadet {
     @PrimaryGeneratedColumn("uuid")
-    user_id: string;
+    cadet_id: string;
 
     @Column()
     username: string;
@@ -16,7 +16,7 @@ export class User {
 
     @Column()
     coordinates: string;
-    
+
     @Column()
     state: string
 
@@ -24,4 +24,4 @@ export class User {
     city: string
 }
 
-export default User;
+export default Cadet;
