@@ -22,7 +22,7 @@ const getEventById = async (req: any, res: any) => {
     if (record) {
       res.status(200).json(record);
     }else{
-      res.status(404).send("id not found")
+      res.status(404).send("Event does not exist in database")
     }
   } catch (err) {
     res.status(500).send("Some error occored");
