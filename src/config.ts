@@ -1,12 +1,14 @@
 import { DataSource } from "typeorm";
-import Tables from "./Entities";
+import Tables from "./entities";
+import dotenv from "dotenv";
+dotenv.config()
 const AppDataSource = new DataSource({
     type: "postgres",
     host: "localhost",
     port: 5432,
-    username: "postgres",
-    password: "black@2018",
-    database: "Test",
+    username: process.env.POSTGRES_USERNAME,
+    password: process.env.POSTGRES_PASSWORD,
+    database: "udaanapp",
     entities: Tables,
     synchronize: true,
     logging: true

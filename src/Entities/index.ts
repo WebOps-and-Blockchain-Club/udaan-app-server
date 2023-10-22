@@ -1,6 +1,6 @@
-import { Events } from "./events"
-
-export default [Events];
+import { Events } from "./events";
+import User from "./user";
+export default [Events, User];
 
 
 
