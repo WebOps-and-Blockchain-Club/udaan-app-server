@@ -1,4 +1,3 @@
-// import { json } from "express/lib/response";
 import AppDataSource from "../config";
 import { Events } from "../entities/events";
 
