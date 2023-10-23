@@ -173,7 +173,8 @@ const nearestCadet = (user: User) => {
             index = i;
         }
     }
-    return cadets[index].cadet_id;
+    cadets.sort()
+    return cadets;
 }
 
 app.get('/getCadet/:userId', async (req, res) => {
@@ -189,8 +190,16 @@ app.get('/getCadet/:userId', async (req, res) => {
         where: { city: user?.city }
     });
 
-    const nearestCadet_id = await nearestCadet(user as User)
-    res.json({ "cadet": nearestCadet_id, "user id": userId })
+    const nearestCadets = await nearestCadet(user as User)
+    console.log(nearestCadets)
+    let cadetArray = [];
+    for(let i = 0; i < nearestCadets.length; i++) {
+        cadetArray.push(nearestCadets[i].cadet_id)
+    }
+    res.send({
+        user: userId,
+        cadet_ids: cadetArray
+    })
 })
 
 app.post('/addCadet', async(req, res) => {
