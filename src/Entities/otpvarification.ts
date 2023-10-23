@@ -1,8 +1,11 @@
-import { Entity ,Column, CreateDateColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "Otp" })
 export class Otp {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn()
+  opt_id: number;
+  
+  @Column()
   user_id: string;
 
   @Column()
