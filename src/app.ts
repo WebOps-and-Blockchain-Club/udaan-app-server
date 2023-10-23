@@ -1,27 +1,30 @@
-import "reflect-metadata"
-import express from 'express';
+import "reflect-metadata";
+import express from "express";
 import AppDataSource from "./config";
-import cors from "cors";
-import dotenv from "dotenv"
+import { eventsRoutes } from "./events/routes";
+import { authRoutes } from "./auth/routes";
+
 import bcrypt from "bcrypt";
-import * as jwt from 'jsonwebtoken'
+import cors from "cors";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import User from "./entities/user";
 import verifyJwt from "./middleware/jwt";
-import User from './entities/user'
 import Cadet from "./entities/cadet";
-
-import axios from 'axios'
-import { request } from "http";
-
 
 const app = express();
 app.use(express.json());
 const port = 3000;
 app.use(
-    cors({
-        origin: "*",
-    })
+  cors({
+    origin: "*",
+  })
 );
 dotenv.config();
+app.use("/api/v1/events", eventsRoutes);
+app.use("/api/v1/auth", authRoutes);
+
+app.get("/", async (req, resp) => {});
 // app.post('/registration', async (req, resp) => {
 
 // });
@@ -205,7 +208,7 @@ app.get('/getCadet/:userId', async (req, res) => {
 app.post('/addCadet', async(req, res) => {
     const cadetRepo = AppDataSource.getRepository(Cadet)
     let newCadet = {...req.body}
-    newCadet.coordinates = JSON.stringify(req.body.coordinates)
+    newCadet.coordinates = req.body.coordinates
     let cadetInserted = await cadetRepo.save(newCadet)
     res.send(cadetInserted)
 })
@@ -217,7 +220,8 @@ app.post('/addUser', async(req, res) => {
     res.send(userInserted)
 })
 
-AppDataSource.initialize().then(() => {
+AppDataSource.initialize()
+  .then(() => {
     app.listen(port, () => {
         console.log(`application is running on port ${port}.`);
     })
