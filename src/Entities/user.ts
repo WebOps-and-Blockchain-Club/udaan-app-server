@@ -22,6 +22,9 @@ export class User {
 
     @Column()
     city: string
+
+    @Column()
+    verified:boolean
 }
 
 export default User;

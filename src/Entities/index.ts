@@ -1,7 +1,8 @@
 import { Events } from "./events";
 import User from "./user";
 import Cadet from './cadet'
-export default [Events, User, Cadet];
+import OtpVerify from "./otpVerify";
+export default [Events, User, Cadet,OtpVerify];
 
 
 

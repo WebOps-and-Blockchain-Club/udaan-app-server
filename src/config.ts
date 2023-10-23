@@ -8,7 +8,7 @@ const AppDataSource = new DataSource({
     port: 5432,
     username: process.env.POSTGRES_USERNAME,
     password: process.env.POSTGRES_PASSWORD,
-    database: "udaanapp",
+    database: "webopsApp",
     entities: Tables,
     synchronize: true,
     // logging: true
