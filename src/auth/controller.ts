@@ -2,7 +2,7 @@ import AppDataSource from "../config";
 import bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import User from "../entities/user";
-import Otp from "../entities/otpvarification";
+import OtpVerify from "../entities/otpVerify";
 import nodemailer from "nodemailer";
 
 const generateAccessToken = (user: User): String => {
@@ -17,14 +17,14 @@ const generateRefreshToken = (user: User): String => {
   return jwt.sign({ id: id }, process.env.REFRESH_TOKEN_SECRET || "");
 };
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
-  auth: {
-    user: process.env.AUTH_EMAIL,
-    pass: process.env.AUTH_PASSWORD,
-  },
-});
+// const transporter = nodemailer.createTransport({
+//   host: "smtp.ethereal.email",
+//   port: 587,
+//   auth: {
+//     user: process.env.AUTH_EMAIL,
+//     pass: process.env.AUTH_PASSWORD,
+//   },
+// });
 
 let refreshTokens: any = [];
 
@@ -63,7 +63,7 @@ const login = async (req: any, res: any) => {
     where: { email: req.body.email },
   });
 
-  if (!user) {
+  if (!user || !user.verified) {
     res.status(404).json({ error: "User not found" });
   } else {
     const matchPassword = await bcrypt.compare(
@@ -88,7 +88,6 @@ const login = async (req: any, res: any) => {
 
 const register = async (req: any, res: any) => {
   const userRepo = AppDataSource.getRepository(User);
-  const otpRepo = AppDataSource.getRepository(Otp);
   const user = await userRepo.findOne({
     where: { email: req.body.email },
   });
@@ -105,8 +104,7 @@ const register = async (req: any, res: any) => {
     const newUser = await userRepo.save(user);
     const id = newUser.id;
     const email = newUser.email;
-    sendOTPVerificationEmail({ id, email }, res);
-    res.status(200).json({ message: "User Registered", newUser: newUser });
+    sendOtp(newUser, res)
   }
 };
 
@@ -116,109 +114,171 @@ const logout = (req: any, res: any) => {
   return res.json({ message: "User logged out" });
 };
 
-const sendOTPVerificationEmail = async (req: any, res: any) => {
-  const { id, email } = req;
-  const otpRepo = AppDataSource.getRepository(Otp);
-  try {
-    const otp = `${Math.floor(Math.random() * 9000 + 1000)}`;
-    const mailOptions = {
-      from: process.env.AUTH_EMAIL,
-      to: email,
-      subject: "Verify Your Email",
-      html: `<p>Enter <b>${otp}</b> in the app to verify your email addreess and complete the sign up process <p> <p> This code <b>expires in 1 hrs</b></p>`,
-    };
+// const transporter = nodemailer.createTransport({
+//   host: "smtp.ethereal.email",
+//   port: 587,
+//   auth: {
+//     user: process.env.AUTH_EMAIL,
+//     pass: process.env.AUTH_PASSWORD,
+//   },
+// });
 
-    const saltRounds = 10;
 
-    const hashedOPT = await bcrypt.hash(otp, saltRounds);
-    let otpData: Otp = new Otp();
-    otpData.user_id = id;
-    otpData.otp = hashedOPT;
-    otpData.createdAt = Date.now();
-    otpData.expiresAt = Date.now() + 3600000;
-
-    await otpRepo.save(otpData);
-
-    await transporter.sendMail(mailOptions);
-    res.json({
-      status: "PENDING",
-      message: "Verification otp email sent",
-      data: {
-        userId: id,
-        email,
-      },
-    });
-  } catch (error: any) {
-    res.json({
-      status: "Failed",
-      message: error.message,
-    });
+const transporter = nodemailer.createTransport({
+  host: 'smtp.ethereal.email',
+  port: 587,
+  auth: {
+      user: 'dawson.rempel85@ethereal.email',
+      pass: 'NzauPxaYP9wA5j9SqJ'
   }
-};
+});
 
-const verifyOTP = async (req: any, res: any) => {
+const sendOtp = async (user: any, res: any) => {
+  // console.log(user)
+  const otpRepo = AppDataSource.getRepository(OtpVerify)
   try {
-    const otpRepo = AppDataSource.getRepository(Otp);
-    const userRepo = AppDataSource.getRepository(User);
-    let { userId, otp } = req.body;
-    if (!userId || !otp) {
-      throw Error("Empty otp details are not allowed");
-    } else {
-      const otpData = await otpRepo.find({
-        where: { user_id: userId },
+      const otp = `${Math.floor(1000 + Math.random() * 9000)}`
+
+      const mailOptions = {
+          from: process.env.USER_EMAIL,
+          to: 'ce22b052@gmail.com',
+          subject: 'Hello from Node.js!',
+          text: 'This is a test email sent from Node.js using Nodemailer.',
+          html: `<p>Enter ${otp}</p>`
+      };
+
+      const saltRounds = 10
+      const hashedOtp = await bcrypt.hash(otp, saltRounds)
+      let newOtp = new OtpVerify();
+      newOtp = {
+          user_id:user.user_id,
+          email: user.email,
+          otp: hashedOtp,
+          createdAt: new Date(Date.now()),
+          expiresAt: new Date(Date.now() + 3600000)
+      }
+
+      // console.log(newOtp)
+      try{
+          const otpsaved = await otpRepo.save(newOtp)
+      }catch(err){
+          console.log(err)
+      }
+
+      transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+              console.log('Error:', error);
+          } else {
+              console.log('Email sent:', info.response);
+          }
       });
 
-      if (otpData.length <= 0) {
-        throw new Error(
-          "Account Record doesen't exists or has been varified already . Please sign up login "
-        );
-      } else {
-        const { expiresAt } = otpData[0];
-        const hashedOPT = otpData[0].otp;
+      transporter.sendMail(mailOptions)
 
-        if (expiresAt < Date.now()) {
-          throw new Error("Code has expired. Please request again.");
-        } else {
-          const validOPT = await bcrypt.compare(otp, hashedOPT);
-          if (!validOPT) {
-            throw new Error("Invalid code passed . Check your inbox ");
-          } else {
-            await userRepo.update(userId, { varified: true });
-            await otpRepo.delete(userId);
-            res.json({
-              status: "VARIFIED",
-              message: "User email varified successfully",
-            });
+      res.json({
+          status: "Pending",
+          message: "otp sent",
+          data: {
+              userId: user.user_id,
+              email:user.email
           }
-        }
-      }
-    }
-  } catch (error: any) {
-    res.json({
-      status: "Failed",
-      message: error.message,
-    });
-  }
-};
+      })
 
-const resendOTPVerificationCode = async (req: any, res: any) => {
+  } catch {
+      res.json({
+          status: "Failed",
+          message: "otp sent"
+      })
+  }
+}
+
+
+const verifyOTP =async (req:any, res:any) => {
   try {
-    const otpRepo = AppDataSource.getRepository(Otp);
-    let { userId, email } = req.body;
+      let { inputEmail, inputOtp } = req.body
+      if (!inputEmail || !inputOtp) {
+          throw Error("empty otp details not allowed")
+      } else {
+          const userRepo = AppDataSource.getRepository(User)
+          const otpRepo = AppDataSource.getRepository(OtpVerify)
 
-    if (!userId || !email) {
-      throw Error("Empty user details are not allowed ");
-    } else {
-      await otpRepo.delete(userId);
-      sendOTPVerificationEmail({ userId, email }, res);
-    }
-  } catch (error: any) {
-    res.json({
-      status: "Failed",
-      message: error.message,
-    });
+          const userOtpVerification = await otpRepo.findOne({
+              where: { email: inputEmail }
+          })
+          console.log(userOtpVerification)
+
+          if (!userOtpVerification) {
+              throw new Error("Account record doesn't exist or verified")
+          } else {
+              console.log("hh")
+              const expiresAt = userOtpVerification.expiresAt
+              // const hashedOtp = userOtpVerification[0].otp
+              const otp = userOtpVerification.otp
+
+              console.log(otp)
+
+
+              if (expiresAt < new Date(Date.now())) {
+                  // await userOtpVerification.delete({ user_id:userId })
+                  await otpRepo.delete({ email: inputEmail })
+
+                  // throw new Error("Code expired")
+                  return res.json(
+                      { error: "OTP Expired" }
+                  )
+              } else {
+                  const validOtp = await bcrypt.compare(inputOtp, otp)
+                  console.log(validOtp)
+                  if (!validOtp) {
+                      return res.json(
+                          { error: "Invalid code passed" }
+                      )
+                  } else {
+                      console.log("h")
+                      console.log(inputEmail)
+                      const dummy=await userRepo.update({email:inputEmail}, { verified: true })
+                      console.log(dummy)
+                      console.log(userRepo)
+                      await otpRepo.delete({ email:inputEmail })
+                      res.json({
+                          status: "verified",
+                          message: ({ message: "User Registered" })
+                      })
+                  }
+              }
+          }
+      }
+  } catch (error) {
+      res.json({
+          status: "Failed"
+      })
   }
-};
+}
+
+
+const resendOTPVerificationCode= async (req:any, res:any) => {
+  try {
+      let userId = req.body.userId
+      let inputEmail = req.body.inputEmail
+
+      if (!userId || !inputEmail) {
+          throw Error("empty otp details not allowed")
+      } else {
+          const otpRepo = AppDataSource.getRepository(OtpVerify)
+          await otpRepo.delete({ email:inputEmail })
+          const user={
+              user_id:userId,
+              email:inputEmail
+          }
+          console.log(user)
+          await sendOtp(user, res)
+      }
+  } catch (error) {
+      res.json({
+          status: "failed"
+      })
+  }
+}
 
 export const controller = {
   refresh,

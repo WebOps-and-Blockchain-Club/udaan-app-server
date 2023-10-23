@@ -14,9 +14,6 @@ export class User {
     @Column()
     password: string;
 
-    @Column('boolean',{default:false})
-    varified:boolean;
-
     @Column()
     coordinates: string;
     
@@ -26,7 +23,7 @@ export class User {
     @Column()
     city: string
 
-    @Column()
+    @Column('boolean',{default:false})
     verified:boolean
 }
 
