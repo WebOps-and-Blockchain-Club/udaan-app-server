@@ -13,6 +13,9 @@ export class User {
 
     @Column()
     password: string;
+
+    @Column('boolean',{default:false})
+    varified:boolean;
 }
 
 export default User;

@@ -8,3 +8,5 @@ authRoutes.post('/refresh',controller.refresh);
 authRoutes.post('/login',controller.login);
 authRoutes.post('/register',controller.register);
 authRoutes.post('/logout',verifyJwt,controller.logout);
+authRoutes.post('/varifyotp',controller.verifyOTP);
+authRoutes.post('/resendopt',controller.resendOTPVerificationCode);

@@ -6,10 +6,7 @@ import { authRoutes } from "./auth/routes";
 
 import cors from "cors";
 import dotenv from "dotenv";
-import bcrypt from "bcrypt";
-import * as jwt from "jsonwebtoken";
-import verifyJwt from "./middleware/jwt";
-import User from "./entities/user";
+
 const app = express();
 app.use(express.json());
 const port = 3000;

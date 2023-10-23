@@ -1,6 +1,7 @@
 import { Events } from "./events";
 import User from "./user";
-export default [Events, User];
+import Otp from "./otpvarification";
+export default [Events, User,Otp];
 
 
 
