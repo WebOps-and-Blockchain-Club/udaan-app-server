@@ -22,6 +22,9 @@ export class Cadet {
 
     @Column()
     city: string
+
+    @Column()
+    isAvailable: boolean
 }
 
 export default Cadet;
