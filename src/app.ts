@@ -26,11 +26,6 @@ app.use("/api/v1/auth", authRoutes);
 
 //////////////////////MAP////////////////////////////////
 
-const simulatedCadetLocations = [
-    { id: 1, latitude: 18.922557, longitude: 72.834432 },
-    { id: 2, latitude: 26.621055, longitude: 80.850662 },
-    { id: 3, latitude: 18.398745, longitude: 76.563557 },
-];
 
 const calculateDistance = (lat1: any, lon1: any, lat2: any, lon2: any) => {// calculating the distance between two locations
     const R = 6371; // Radius of the Earth in kilometers
@@ -50,14 +45,6 @@ const deg2rad = (degrees: any) => {// converts degree into radian
     return degrees * (Math.PI / 180);
 };
 
-const distance = calculateDistance(//passing arguments(user location and cadet location) to the distance calulating function
-    simulatedCadetLocations[0].latitude,
-    simulatedCadetLocations[0].longitude,
-    simulatedCadetLocations[1].latitude,
-    simulatedCadetLocations[1].longitude,
-);
-
-console.log(distance)
 
 let cadets: any = [];
 
@@ -69,14 +56,15 @@ const nearestCadet = (user: User) => {
         let user_long = JSON.parse(user.coordinates).longitude;
         let cadet_lat = JSON.parse(cadets[i].coordinates).latitude;
         let cadet_long = JSON.parse(cadets[i].coordinates).longitude;
-        let distance = parseFloat(calculateDistance(user_lat, user_long, cadet_lat, cadet_long));
+        let dist = parseFloat(calculateDistance(user_lat, user_long, cadet_lat, cadet_long));
 
-        if (distance < shortestDistance) {
-            shortestDistance = distance;
+        if (dist < shortestDistance) {
+            shortestDistance = dist;
             index = i;
         }
+        cadets[i].distance = dist;
     }
-    cadets.sort()
+    // cadets.sort()
     return cadets;
 }
 
@@ -95,19 +83,38 @@ app.get('/getCadet/:userId', async (req, res) => {
 
     const nearestCadets = await nearestCadet(user as User)
     console.log(nearestCadets)
-    let cadetArray = [];
-    for(let i = 0; i < nearestCadets.length; i++) {
-        cadetArray.push(nearestCadets[i].cadet_id)
+
+    let firstBatch:any = []
+    let secondBatch:any = []
+    let thirdBatch:any = []
+    for(let i = 0; i < nearestCadets.length; i++){
+        if(nearestCadets[i].distance <= 5){
+            firstBatch.push(nearestCadets[i].cadet_id)
+        }else if(nearestCadets[i].distance > 5 && (nearestCadets[i].distance <= 10)){
+            secondBatch.push(nearestCadets[i].cadet_id)
+        }else{
+            thirdBatch.push(nearestCadets[i].cadet_id)
+        }
     }
+
+    console.log(nearestCadets)
+    console.log(firstBatch, secondBatch, thirdBatch)
+
     res.send({
         user: userId,
-        cadet_ids: cadetArray
+        cadet_ids: {
+            "5km": firstBatch,
+            "10km": secondBatch,
+            "more": thirdBatch
+        }
     })
+
 })
 
 app.post('/addCadet', async(req, res) => {
     const cadetRepo = AppDataSource.getRepository(Cadet)
     let newCadet = {...req.body}
+    newCadet.isAvailable = true
     newCadet.coordinates = req.body.coordinates
     let cadetInserted = await cadetRepo.save(newCadet)
     res.send(cadetInserted)
@@ -119,6 +126,8 @@ app.post('/addUser', async(req, res) => {
     let userInserted = await userRepo.save(newUser)
     res.send(userInserted)
 })
+
+
 
 AppDataSource.initialize()
   .then(() => {
