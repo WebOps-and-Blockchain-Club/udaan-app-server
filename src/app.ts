@@ -156,19 +156,19 @@ const distance = calculateDistance(//passing arguments(user location and cadet l
 
 console.log(distance)
 
-let cadets:any = [];
+let cadets: any = [];
 
-const nearestCadet = (user:User) =>{
+const nearestCadet = (user: User) => {
     let shortestDistance = Number.MAX_SAFE_INTEGER;
     let index = 0;
-    for (var i = 0 ; i < cadets.length ; i++) {
+    for (var i = 0; i < cadets.length; i++) {
         let user_lat = JSON.parse(user.coordinates).latitude;
         let user_long = JSON.parse(user.coordinates).longitude;
         let cadet_lat = JSON.parse(cadets[i].coordinates).latitude;
         let cadet_long = JSON.parse(cadets[i].coordinates).longitude;
         let distance = parseFloat(calculateDistance(user_lat, user_long, cadet_lat, cadet_long));
-        
-        if(distance < shortestDistance){
+
+        if (distance < shortestDistance) {
             shortestDistance = distance;
             index = i;
         }
@@ -176,21 +176,21 @@ const nearestCadet = (user:User) =>{
     return cadets[index].cadet_id;
 }
 
-app.get('/getCadet/:userId', async(req, res) => {
-    
+app.get('/getCadet/:userId', async (req, res) => {
+
     const userRepo = AppDataSource.getRepository(User)
     const userId = req.params.userId;
     const user = await userRepo.findOne({
-        where: {user_id: userId}
+        where: { user_id: userId }
     });
-    
+
     const cadetRepo = AppDataSource.getRepository(Cadet)
     cadets = await cadetRepo.find({
-        where: {city: user?.city}
+        where: { city: user?.city }
     });
 
     const nearestCadet_id = await nearestCadet(user as User)
-    res.json({"cadet": nearestCadet_id, "user id": userId})
+    res.json({ "cadet": nearestCadet_id, "user id": userId })
 })
 
 app.post('/addCadet', async(req, res) => {
