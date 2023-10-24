@@ -99,20 +99,22 @@ const getCadetUserId = async (userId: string) => {
 
 const sendNotificationToCadets = async (
   registrationToken: string,
-  userMessage: string
+  userMessage: string,
+  sosId:string
 ) => {
   // This registration token comes from the client FCM SDKs.
   console.log(registrationToken);
   const message = {
-    notification: {
-      title: "SOS HELP REQUIRED",
-      body: `${userMessage == "" ? "URGENT HELP REQUIRED." : userMessage}`,
-    },
-
-    // data: {
-    //   score: "850",
-    //   time: "2:45",
+    // notification: {
+    //   title: "SOS HELP REQUIRED",
+    //   body: `${userMessage == "" ? "URGENT HELP REQUIRED." : userMessage}`,
     // },
+
+    data: {
+        title: "SOS HELP REQUIRED",
+        body: `${userMessage == "" ? "URGENT HELP REQUIRED." : userMessage}`,
+        sosRequest_ID:sosId,
+    },
     token: registrationToken,
   };
 
@@ -143,7 +145,7 @@ const sendSOS = async (req: any, res: any) => {
 
   for (const cadet_id in firstBatch) {
     const cadet = await cadetRepo.findOne({ where: { cadet_id: cadet_id } });
-    sendNotificationToCadets(cadet!.fcmToken, userMessage);
+    sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
   }
   await setTimeout(() => {
     // setting a timer for 30 sec and then allowing other set cadets to get notified
@@ -156,7 +158,7 @@ const sendSOS = async (req: any, res: any) => {
   if (!isAccepted) {
     for (const cadet_id in secondBatch) {
       const cadet = await cadetRepo.findOne({ where: { cadet_id: cadet_id } });
-      sendNotificationToCadets(cadet!.fcmToken, userMessage);
+      sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
     }
   } else {
     res.send("Request Send Successfully");
@@ -173,7 +175,7 @@ const sendSOS = async (req: any, res: any) => {
   if (!isAccepted) {
     for (const cadet_id in thirdBatch) {
       const cadet = await cadetRepo.findOne({ where: { cadet_id: cadet_id } });
-      sendNotificationToCadets(cadet!.fcmToken, userMessage);
+      sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
     }
   } else {
     res.send("Request Send Successfully");
@@ -182,8 +184,19 @@ const sendSOS = async (req: any, res: any) => {
 
 // A data base can be made for the sos request containing the
 
-const acceptRequest = async (req: any, res: any) => {};
+const acceptRequest = async (req: any, res: any) => {
+    const sosRequestRepo = AppDataSource.getRepository(SOSRequestInfo);
+    const cadetID=req.body.cadetID;
+    const acceptedAt: number = Date.now();
+    const isAccepted=true;
+    const sosData = {cadetID,isAccepted,acceptedAt};
+    const sosSavedData= await sosRequestRepo.update(req.body.sosId,sosData);
+    res.send(sosSavedData);
+
+    // TODO SET UP A SOCKET 
+};
 
 export const controller = {
   sendSOS,
+  acceptRequest,
 };
