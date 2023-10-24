@@ -17,15 +17,6 @@ const generateRefreshToken = (user: User): String => {
   return jwt.sign({ id: id }, process.env.REFRESH_TOKEN_SECRET || "");
 };
 
-// const transporter = nodemailer.createTransport({
-//   host: "smtp.ethereal.email",
-//   port: 587,
-//   auth: {
-//     user: process.env.AUTH_EMAIL,
-//     pass: process.env.AUTH_PASSWORD,
-//   },
-// });
-
 let refreshTokens: any = [];
 
 const refresh = async (req: any, res: any) => {
@@ -114,24 +105,15 @@ const logout = (req: any, res: any) => {
   return res.json({ message: "User logged out" });
 };
 
-// const transporter = nodemailer.createTransport({
-//   host: "smtp.ethereal.email",
-//   port: 587,
-//   auth: {
-//     user: process.env.AUTH_EMAIL,
-//     pass: process.env.AUTH_PASSWORD,
-//   },
-// });
-
-
 const transporter = nodemailer.createTransport({
-  host: 'smtp.ethereal.email',
+  host: "smtp.ethereal.email",
   port: 587,
   auth: {
-      user: 'dawson.rempel85@ethereal.email',
-      pass: 'NzauPxaYP9wA5j9SqJ'
-  }
+    user: process.env.AUTH_EMAIL,
+    pass: process.env.AUTH_PASSWORD,
+  },
 });
+
 
 const sendOtp = async (user: any, res: any) => {
   // console.log(user)
