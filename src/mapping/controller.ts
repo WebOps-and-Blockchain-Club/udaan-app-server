@@ -1,3 +1,4 @@
+import axios from 'axios';
 
 import "reflect-metadata";
 import AppDataSource from "../config";
@@ -24,12 +25,9 @@ const deg2rad = (degrees: any) => {// converts degree into radian
     return degrees * (Math.PI / 180);
 };
 
-
-let cadets: any = [];
-
-const nearestCadet = (user: User) => {
+const nearestCadet = (user: User, cadets: any) => {
     let shortestDistance = Number.MAX_SAFE_INTEGER;
-    let index = 0;
+
     for (var i = 0; i < cadets.length; i++) {
         let user_lat = JSON.parse(user.coordinates).latitude;
         let user_long = JSON.parse(user.coordinates).longitude;
@@ -39,7 +37,6 @@ const nearestCadet = (user: User) => {
 
         if (dist < shortestDistance) {
             shortestDistance = dist;
-            index = i;
         }
         cadets[i].distance = dist;
     }
@@ -48,46 +45,84 @@ const nearestCadet = (user: User) => {
 }
 
 const getCadetUserId = async (req: any, res: any) => {
-
     const userRepo = AppDataSource.getRepository(User)
     const userId = req.params.userId;
     const user = await userRepo.findOne({
         where: { user_id: userId }
     });
 
-    const cadetRepo = AppDataSource.getRepository(Cadet)
-    cadets = await cadetRepo.find({
-        where: { city: user?.city }
-    });
+    if (user) {
+        let cadets: any = [];
+        const cadetRepo = AppDataSource.getRepository(Cadet)
+        cadets = await cadetRepo.find({
+            where: { city: user.city }
+        });
 
-    const nearestCadets = await nearestCadet(user as User)
-    console.log(nearestCadets)
+        if(cadets.length == 0){
+            console.log("no cadets in your city, searching in nearby cities")
+            let latitude = JSON.parse(user.coordinates).latitude;
+            let longitude = JSON.parse(user.coordinates).longitude;
+            const url = `https://nearby-cities.netlify.app/.netlify/functions/search?latitude=${latitude}&longitude=${longitude}`;
 
-    let firstBatch: any = []
-    let secondBatch: any = []
-    let thirdBatch: any = []
-    for (let i = 0; i < nearestCadets.length; i++) {
-        if (nearestCadets[i].distance <= 5) {
-            firstBatch.push(nearestCadets[i].cadet_id)
-        } else if (nearestCadets[i].distance > 5 && (nearestCadets[i].distance <= 10)) {
-            secondBatch.push(nearestCadets[i].cadet_id)
-        } else {
-            thirdBatch.push(nearestCadets[i].cadet_id)
+            let nearbyCities:any = []
+            try {
+                const response = await axios.get(url);
+                nearbyCities = response.data;
+                console.log((nearbyCities.length > 0) ? nearbyCities.length : undefined);
+            } catch (error) {
+                console.error('Error fetching nearby cities:', error);
+                return res.status(500).json({ error: 'Internal Server Error' });
+            }
+
+            if (nearbyCities.length === 0) {
+                return res.status(404).json({ error: 'No cadets in your nearby cities.' });
+            }
+
+            let i = 0;
+            let maxIterations = 10;
+
+            while (cadets.length == 0 && i <= maxIterations) {
+                console.log(i,cadets.length)
+                console.log(nearbyCities[i].name)
+                cadets = await cadetRepo.find({
+                    where: { city: nearbyCities[i].name }
+                });
+
+                i++;
+
+                if (cadets) break;
+            }
+            
+            if(cadets.length == 0){
+                return res.status(404).json({ error: 'No Cadets found near your region.' });
+            }
         }
+
+        const nearestCadets = await nearestCadet(user as User, cadets)
+
+        let firstBatch: any = []
+        let secondBatch: any = []
+        let thirdBatch: any = []
+        
+        for (let i = 0; i < nearestCadets.length; i++) {
+            if (nearestCadets[i].distance <= 5) {
+                firstBatch.push(nearestCadets[i].cadet_id)
+            } else if (nearestCadets[i].distance > 5 && (nearestCadets[i].distance <= 10)) {
+                secondBatch.push(nearestCadets[i].cadet_id)
+            } else {
+                thirdBatch.push(nearestCadets[i].cadet_id)
+            }
+        }
+
+        res.send({
+            user: userId,
+            cadet_ids: {
+                "5km": firstBatch,
+                "10km": secondBatch,
+                "more": thirdBatch
+            }
+        })
     }
-
-    console.log(nearestCadets)
-    console.log(firstBatch, secondBatch, thirdBatch)
-
-    res.send({
-        user: userId,
-        cadet_ids: {
-            "5km": firstBatch,
-            "10km": secondBatch,
-            "more": thirdBatch
-        }
-    })
-
 }
 
 const addCadet = async (req: any, res: any) => {
@@ -106,38 +141,10 @@ const addUser = async (req: any, res: any) => {
     res.send(userInserted)
 }
 
-import { Request, Response } from 'express';
-import axios from 'axios';
-
-const nearbyCities = async (req: Request, res: Response) => {
-
-  const userRepo = AppDataSource.getRepository(User)
-  const user = await userRepo.findOne({
-    where: { user_id: req.params.userId }
-  })
-
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  } else {
-    let latitude = JSON.parse(user.coordinates).latitude;
-    let longitude = JSON.parse(user.coordinates).longitude;
-    const url = `https://nearby-cities.netlify.app/.netlify/functions/search?latitude=${latitude}&longitude=${longitude}`;
-
-    try {
-      const response = await axios.get(url);
-      console.log(JSON.stringify(response.data, null, 2));
-      res.json(response); // Send the response data back to the client
-    } catch (error) {
-      console.error('Error fetching nearby cities:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  }
-};
 
 
 export const controller = {
     getCadetUserId,
     addCadet,
     addUser,
-    nearbyCities
 };
