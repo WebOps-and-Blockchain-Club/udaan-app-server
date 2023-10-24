@@ -93,8 +93,6 @@ const register = async (req: any, res: any) => {
     user.password = hashedpassword;
 
     const newUser = await userRepo.save(user);
-    const id = newUser.id;
-    const email = newUser.email;
     sendOtp(newUser, res)
   }
 };

@@ -2,29 +2,32 @@ import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
 @Entity({ name: "User" })
 export class User {
-    @PrimaryGeneratedColumn("uuid")
-    user_id: string;
+  @PrimaryGeneratedColumn("uuid")
+  user_id: string;
 
-    @Column()
-    username: string;
+  @Column()
+  username: string;
 
-    @Column()
-    email: string;
+  @Column()
+  email: string;
 
-    @Column()
-    password: string;
+  @Column()
+  password: string;
 
-    @Column()
-    coordinates: string;
-    
-    @Column()
-    state: string
+  @Column()
+  coordinates: string;
 
-    @Column()
-    city: string
+  @Column()
+  state: string;
 
-    @Column('boolean',{default:false})
-    verified:boolean
+  @Column()
+  city: string;
+
+  @Column("boolean", { default: false })
+  verified: boolean;
+
+  @Column()
+  fcmToken: string;
 }
 
 export default User;

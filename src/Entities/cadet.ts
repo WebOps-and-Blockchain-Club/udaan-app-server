@@ -2,29 +2,32 @@ import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
 @Entity({ name: "Cadets" })
 export class Cadet {
-    @PrimaryGeneratedColumn("uuid")
-    cadet_id: string;
+  @PrimaryGeneratedColumn("uuid")
+  cadet_id: string;
 
-    @Column()
-    username: string;
+  @Column()
+  username: string;
 
-    @Column()
-    email: string;
+  @Column()
+  email: string;
 
-    @Column()
-    password: string;
+  @Column()
+  password: string;
 
-    @Column()
-    coordinates: string;
+  @Column()
+  coordinates: string;
 
-    @Column()
-    state: string
+  @Column()
+  state: string;
 
-    @Column()
-    city: string
+  @Column()
+  city: string;
 
-    @Column()
-    isAvailable: boolean
+  @Column()
+  isAvailable: boolean;
+
+  @Column()
+  fcmToken: string;
 }
 
 export default Cadet;

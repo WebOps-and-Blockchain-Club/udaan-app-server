@@ -27,6 +27,7 @@ const deg2rad = (degrees: any) => {// converts degree into radian
 
 let cadets: any = [];
 
+//Function to get the Nearest Cadets with respect to a given user
 const nearestCadet = (user: User) => {
     let shortestDistance = Number.MAX_SAFE_INTEGER;
     let index = 0;
