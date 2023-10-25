@@ -6,7 +6,6 @@ import { authRoutes } from "./auth/routes";
 import { mappingRoutes } from "./mapping/routes";
 import cors from "cors";
 import dotenv from "dotenv"
-import axios from "axios";
 
 
 const app = express();

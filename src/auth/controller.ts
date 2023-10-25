@@ -2,6 +2,7 @@ import AppDataSource from "../config";
 import bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
 import User from "../entities/user";
+import Cadet from "../entities/cadet";
 import OtpVerify from "../entities/otpVerify";
 import nodemailer from "nodemailer";
 
@@ -59,22 +60,32 @@ const refresh = async (req: any, res: any) => {
 
 const login = async (req: any, res: any) => {
   const userRepo = AppDataSource.getRepository(User);
+  const cadetRepo = AppDataSource.getRepository(Cadet);
+
+  let _user:any ;
+
   const user = await userRepo.findOne({
     where: { email: req.body.email },
   });
 
-  if (!user || !user.verified) {
-    res.status(404).json({ error: "User not found" });
+  const cadet = await cadetRepo.findOne({
+    where: { email: req.body.email },
+  }); 
+
+  _user = (user) ? user : cadet;
+  
+  if (!_user || !_user.verified) {
+    res.status(404).json({ error: "User not found, Please Register." });
   } else {
     const matchPassword = await bcrypt.compare(
       req.body.password,
-      user.password
+      _user.password
     );
     if (!matchPassword) {
       res.status(404).json({ error: "Invalid Credentials" });
     } else {
-      const accessToken = generateAccessToken(user);
-      const refreshToken = generateRefreshToken(user);
+      const accessToken = generateAccessToken(_user);
+      const refreshToken = generateRefreshToken(_user);
 
       refreshTokens.push(refreshToken);
       res.status(200).json({
@@ -88,23 +99,51 @@ const login = async (req: any, res: any) => {
 
 const register = async (req: any, res: any) => {
   const userRepo = AppDataSource.getRepository(User);
+  const cadetRepo = AppDataSource.getRepository(Cadet);
+
   const user = await userRepo.findOne({
     where: { email: req.body.email },
   });
 
-  if (user) {
-    res.status(203).json({
-      message: "User already Registered, Please Login to your account",
-    });
+  const cadet = await cadetRepo.findOne({
+    where: { email: req.body.email },
+  }); 
+
+  let new_user:any ;
+  new_user = (user) ? user : cadet;
+
+  if (new_user) {
+    if(new_user.verified){
+      res.status(203).json({
+        message: "User already Registered, Please Login to your account",
+      });
+    }else{
+      res.status(202).json({
+        message: "User already exist, please verify",
+      });
+      const otp_Sent = await sendOtp(new_user, res)
+      console.log(otp_Sent)
+    }
+      
   } else {
     let user = { ...req.body };
     const hashedpassword = await bcrypt.hash(user.password, 12);
     user.password = hashedpassword;
+    
+    let newUser:User ;
+    let newCadet:Cadet ;
 
-    const newUser = await userRepo.save(user);
-    const id = newUser.id;
-    const email = newUser.email;
-    sendOtp(newUser, res)
+    if(req.body.role === 'user'){
+      newUser = await userRepo.save(user);
+      new_user = newUser;
+    }else if(req.body.role === 'cadet'){
+      newCadet = await cadetRepo.save(user);
+      new_user = newCadet;
+    }
+
+    const id = new_user.id;//////////
+    const email = new_user.email;//////////
+    sendOtp(new_user, res)
   }
 };
 

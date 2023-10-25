@@ -23,8 +23,14 @@ export class Cadet {
     @Column()
     city: string
 
-    @Column()
+    @Column('boolean',{default:true})
     isAvailable: boolean
+
+    @Column('boolean',{default:false})
+    verified:boolean
+
+    @Column()
+    role: string
 }
 
 export default Cadet;

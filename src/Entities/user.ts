@@ -25,6 +25,9 @@ export class User {
 
     @Column('boolean',{default:false})
     verified:boolean
+
+    @Column()
+    role: string
 }
 
 export default User;
