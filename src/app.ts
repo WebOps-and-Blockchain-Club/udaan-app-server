@@ -6,7 +6,7 @@ import { authRoutes } from "./auth/routes";
 import { mappingRoutes } from "./mapping/routes";
 import cors from "cors";
 import dotenv from "dotenv"
-
+// import { Server } from 'ws'
 
 const app = express();
 app.use(express.json());
@@ -23,10 +23,14 @@ app.use("/api/v1/events", eventsRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/mapping", mappingRoutes);
 
-
 AppDataSource.initialize()
   .then(() => {
     app.listen(port, () => {
       console.log(`application is running on port ${port}.`);
     })
   }).catch((err: any) => console.log("error", err));
+
+// const wss =new Server()
+// wss.on('connection', ws =>{
+//   console.log("client connected");
+// })

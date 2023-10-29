@@ -23,11 +23,14 @@ export class User {
     @Column()
     city: string
 
-    @Column('boolean',{default:false})
-    verified:boolean
-
     @Column()
     role: string
+
+    @Column('boolean',{default:true})
+    isAvailable: boolean
+
+    @Column('boolean',{default:false})
+    verified: boolean
 }
 
 export default User;
