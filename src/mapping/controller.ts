@@ -5,8 +5,6 @@ import AppDataSource from "../config";
 
 import User from "../entities/user";
 
-import Cadet from "../entities/cadet";
-
 const calculateDistance = (lat1: any, lon1: any, lat2: any, lon2: any) => {// calculating the distance between two locations
     const R = 6371; // Radius of the Earth in kilometers
     const dLat = deg2rad(lat2 - lat1);
@@ -53,11 +51,15 @@ const getCadetUserId = async (req: any, res: any) => {
 
     if (user) {
         let cadets: any = [];
-        const cadetRepo = AppDataSource.getRepository(Cadet)
-        cadets = await cadetRepo.find({
-            where: { city: user.city }
-        });
 
+        const cadetRepo = AppDataSource.getRepository(User);
+        cadets = await cadetRepo.find({
+            where: { 
+                city: user.city,
+                role: 'cadet'
+            }
+        });
+        
         if(cadets.length == 0){
             console.log("no cadets in your city, searching in nearby cities")
             let latitude = JSON.parse(user.coordinates).latitude;
@@ -125,26 +127,26 @@ const getCadetUserId = async (req: any, res: any) => {
     }
 }
 
-const addCadet = async (req: any, res: any) => {
-    const cadetRepo = AppDataSource.getRepository(Cadet)
-    let newCadet = { ...req.body }
-    newCadet.isAvailable = true
-    newCadet.coordinates = req.body.coordinates
-    let cadetInserted = await cadetRepo.save(newCadet)
-    res.send(cadetInserted)
-}
+// const addCadet = async (req: any, res: any) => {
+//     const cadetRepo = AppDataSource.getRepository(User)
+//     let newCadet = { ...req.body }
+//     newCadet.isAvailable = true
+//     newCadet.coordinates = req.body.coordinates
+//     let cadetInserted = await cadetRepo.save(newCadet)
+//     res.send(cadetInserted)
+// }
 
-const addUser = async (req: any, res: any) => {
-    const userRepo = AppDataSource.getRepository(User)
-    let newUser = { ...req.body }
-    let userInserted = await userRepo.save(newUser)
-    res.send(userInserted)
-}
+// const addUser = async (req: any, res: any) => {
+//     const userRepo = AppDataSource.getRepository(User)
+//     let newUser = { ...req.body }
+//     let userInserted = await userRepo.save(newUser)
+//     res.send(userInserted)
+// }
 
 
 
 export const controller = {
     getCadetUserId,
-    addCadet,
-    addUser,
+    // addCadet,
+    // addUser,
 };
