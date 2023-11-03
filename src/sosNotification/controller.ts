@@ -1,7 +1,6 @@
 import "reflect-metadata";
 import AppDataSource from "../config";
 import User from "../entities/user";
-import Cadet from "../entities/cadet";
 import SOSRequestInfo from "../entities/sosRequest";
 import { initializeApp, applicationDefault } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
@@ -67,11 +66,6 @@ const getCadetUserId = async (userId: string) => {
     where: { user_id: userId },
   });
 
-  const cadetRepo = AppDataSource.getRepository(Cadet);
-  const cadets = await cadetRepo.find({
-    where: { city: user?.city },
-  });
-
   const nearestCadets = await nearestCadet(user as User);
   console.log(nearestCadets);
 
@@ -134,7 +128,7 @@ const sendNotificationToCadets = async (
 const sendSOS = async (req: any, res: any) => {
   const userID: string = req.body.userID;
   const userMessage: string = req.body.userMessage;
-  const cadetRepo = AppDataSource.getRepository(Cadet);
+  const cadetRepo = AppDataSource.getRepository(User);
   const sosRequestRepo = AppDataSource.getRepository(SOSRequestInfo);
   const createdAt: number = Date.now();
   const sosData = { userID, userMessage, createdAt };
@@ -144,7 +138,7 @@ const sendSOS = async (req: any, res: any) => {
   let [firstBatch, secondBatch, thirdBatch] = await getCadetUserId(userID);
 
   for (const cadet_id in firstBatch) {
-    const cadet = await cadetRepo.findOne({ where: { cadet_id: cadet_id } });
+    const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
     sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
   }
   await setTimeout(() => {
@@ -157,7 +151,7 @@ const sendSOS = async (req: any, res: any) => {
   let isAccepted = sosSavedData2?.isAccepted;
   if (!isAccepted) {
     for (const cadet_id in secondBatch) {
-      const cadet = await cadetRepo.findOne({ where: { cadet_id: cadet_id } });
+      const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
       sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
     }
   } else {
@@ -174,7 +168,7 @@ const sendSOS = async (req: any, res: any) => {
   isAccepted = sosSavedData3?.isAccepted;
   if (!isAccepted) {
     for (const cadet_id in thirdBatch) {
-      const cadet = await cadetRepo.findOne({ where: { cadet_id: cadet_id } });
+      const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
       sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
     }
   } else {

@@ -46,22 +46,24 @@ const getCadetUserId = async (req: any, res: any) => {
     const userRepo = AppDataSource.getRepository(User)
     const userId = req.params.userId;
     const user = await userRepo.findOne({
-        where: { user_id: userId }
+        where: { 
+            user_id: userId,
+            role: 'user'
+        }
     });
 
     if (user) {
         let cadets: any = [];
 
-        const cadetRepo = AppDataSource.getRepository(User);
-        cadets = await cadetRepo.find({
+        cadets = await userRepo.find({
             where: { 
                 city: user.city,
                 role: 'cadet'
             }
         });
-        
+
         if(cadets.length == 0){
-            console.log("no cadets in your city, searching in nearby cities")
+            // console.log("no cadets in your city, searching in nearby cities")
             let latitude = JSON.parse(user.coordinates).latitude;
             let longitude = JSON.parse(user.coordinates).longitude;
             const url = `https://nearby-cities.netlify.app/.netlify/functions/search?latitude=${latitude}&longitude=${longitude}`;
@@ -86,7 +88,7 @@ const getCadetUserId = async (req: any, res: any) => {
             while (cadets.length == 0 && i <= maxIterations) {
                 console.log(i,cadets.length)
                 console.log(nearbyCities[i].name)
-                cadets = await cadetRepo.find({
+                cadets = await userRepo.find({
                     where: { city: nearbyCities[i].name }
                 });
 
@@ -127,14 +129,14 @@ const getCadetUserId = async (req: any, res: any) => {
     }
 }
 
-// const addCadet = async (req: any, res: any) => {
-//     const cadetRepo = AppDataSource.getRepository(User)
-//     let newCadet = { ...req.body }
-//     newCadet.isAvailable = true
-//     newCadet.coordinates = req.body.coordinates
-//     let cadetInserted = await cadetRepo.save(newCadet)
-//     res.send(cadetInserted)
-// }
+const addCadet = async (req: any, res: any) => {
+    const cadetRepo = AppDataSource.getRepository(User)
+    let newCadet = { ...req.body }
+    newCadet.isAvailable = true
+    newCadet.coordinates = req.body.coordinates
+    let cadetInserted = await cadetRepo.save(newCadet)
+    res.send(cadetInserted)
+}
 
 // const addUser = async (req: any, res: any) => {
 //     const userRepo = AppDataSource.getRepository(User)
@@ -147,6 +149,6 @@ const getCadetUserId = async (req: any, res: any) => {
 
 export const controller = {
     getCadetUserId,
-    // addCadet,
+    addCadet,
     // addUser,
 };

@@ -112,9 +112,19 @@ const logout = (req: any, res: any) => {
   return res.json({ message: "User logged out" });
 };
 
+// const transporter = nodemailer.createTransport({
+//   host: "smtp.ethereal.email",
+//   port: 587,
+//   auth: {
+//     user: process.env.AUTH_EMAIL,
+//     pass: process.env.AUTH_PASSWORD,
+//   },
+// });
 const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
+  // host: "gmail",
+  // port: 587,
+  // secure: true,
+  service:"gmail",
   auth: {
     user: process.env.AUTH_EMAIL,
     pass: process.env.AUTH_PASSWORD,
@@ -141,8 +151,9 @@ const sendOtp = async (user: any, res: any) => {
       from: process.env.USER_EMAIL,
       to: user.email,
       subject: 'Verification Email',
-      text: 'This is a test email sent from Node.js using Nodemailer.',
-      html: `<p>Enter ${otp}</p>`
+      text: `Enter the code: ${otp}​. This is OTP will expire in 1 hrs`,
+      html: `<p>Enter the code: <strong>${otp}</strong></p>
+      <p>This is OTP will <strong>expire in 1 hrs</strong></p>`
     };
 
     const saltRounds = 10
