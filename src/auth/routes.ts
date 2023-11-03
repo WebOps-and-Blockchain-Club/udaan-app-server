@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {controller} from "./controller";
 import verifyJwt from "../middleware/jwt";
-
 export const authRoutes = Router();
 
 authRoutes.post('/refresh',controller.refresh);

@@ -1,4 +1,5 @@
 /node_modules
 /dist
-.env
+/.env
+/ncc-udaan-firebase-adminsdk-29rbq-03494267bc.json
 
