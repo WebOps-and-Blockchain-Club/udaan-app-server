@@ -13,6 +13,7 @@ import dotenv from "dotenv";
 const app = express();
 app.use(express.json());
 const port = 3000;
+
 app.use(
   cors({
     origin: "*",
@@ -30,8 +31,12 @@ app.use("api/v1/SOSNotification",sosNotificationRoutes);
 
 AppDataSource.initialize()
   .then(() => {
-    app.listen(port, () => {
-      console.log(`application is running on port ${port}.`);
+    // app.listen(port, () => {
+      // console.log(`application is running on port ${port}.`);
+    // });
+    // const port = 3000;
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Server is running on http://65.2.38.110:${port}`);
     });
   })
   .catch((err: any) => console.log("error", err));
