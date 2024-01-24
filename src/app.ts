@@ -1,4 +1,4 @@
-import "reflect-metadata";
+import "reflect-metadata"
 import express, { json } from "express"
 import AppDataSource from "./config"
 import { eventsRoutes } from "./events/routes"
