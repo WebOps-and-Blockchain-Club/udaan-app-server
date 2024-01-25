@@ -1,9 +1,13 @@
-import "reflect-metadata";
+import "reflect-metadata"
 import express, { json } from "express"
 import AppDataSource from "./config"
 import { eventsRoutes } from "./events/routes";
 import { authRoutes } from "./auth/routes";
 import { sosNotificationRoutes } from "./sos/routes";
+import { eventsRoutes } from "./events/routes"
+import { authRoutes } from "./auth/routes"
+import { mappingRoutes } from "./mapping/routes";
+import { sosNotificationRoutes } from "./sosNotification/routes";
 import cors from "cors";
 import dotenv from "dotenv";
 import User from "./entities/user";
