@@ -117,10 +117,11 @@ const acceptRequest = async (req: any, res: any) => {
     const acceptedAt = (Date.now()).toString();
     const isAccepted=true;
 
-    const sosData = {cadetID: cadetID,isAccepted: isAccepted,acceptedAt: acceptedAt}
+    // let sosData = {};
+    // sosData.
 
-    const sosSavedData= await sosRequestRepo.update(req.body.sosId,sosData);
-    res.send(sosSavedData);
+    // const sosSavedData= await sosRequestRepo.update(req.body.sosId,sosData);
+    // res.send(sosSavedData);
 
     // TODO SET UP A SOCKET 
 };
