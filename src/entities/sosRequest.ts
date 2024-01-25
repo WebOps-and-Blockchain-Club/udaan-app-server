@@ -18,10 +18,10 @@ export class SOSRequestInfo {
   isAccepted: boolean;
 
   @Column()
-  createdAt: number;
+  createdAt: string;
 
   @Column({default:0})
-  acceptedAt: number;
+  acceptedAt: string;
 }
 
 export default SOSRequestInfo;

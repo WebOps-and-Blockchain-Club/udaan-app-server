@@ -1,37 +1,22 @@
-import { Request, Response, NextFunction } from "express";
-import jwt, { VerifyErrors } from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
-interface AuthRequest extends Request {
-  user?: any;
-}
+const fetchuser = async (req: any, res: any, next: any) => {
+    console.log(`in fetchuser`)
+    const jwt_secret = process.env.TOKEN_SECRET!;
+    const token = req.headers['auth-token'];
+    console.log(`auth-token: ${token}`)
 
-const verifyJwt = (req: AuthRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.auth as string;
-
-  if (!authHeader) {
-    return res
-      .status(401)
-      .json({ message: "Unauthorized: Missing Authorization header" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  jwt.verify(
-    token,
-    process.env.TOKEN_SECRET || "",
-    (err: VerifyErrors | null, user: any) => {
-      if (err) {
-        return res.status(403).json({ error: err, message: "Invalid token" });
-      }
-
-      // Add a check for user existence before assigning
-      if (!req.hasOwnProperty("user")) {
-        req.user = user;
-      }
-
-      next();
+    if (!token) {
+        return res.status(401).json({ error: "user is not authenticated" });
     }
-  );
+
+    try {
+        const payload: JwtPayload = jwt.verify(token, jwt_secret) as JwtPayload;
+        req.user_id = payload.id;
+        next();
+    } catch (error) {
+        res.status(500).json({ error: "some error occurred" });
+    }
 };
 
-export default verifyJwt;
+export default fetchuser;

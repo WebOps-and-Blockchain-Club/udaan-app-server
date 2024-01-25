@@ -13,84 +13,6 @@ initializeApp({
   projectId: "ncc-udaan",
 });
 
-const deg2rad = (degrees: any) => {
-  // converts degree into radian
-  return degrees * (Math.PI / 180);
-};
-
-const calculateDistance = (lat1: any, lon1: any, lat2: any, lon2: any) => {
-  // calculating the distance between two locations
-  const R = 6371; // Radius of the Earth in kilometers
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-
-  const a = // just math
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) *
-      Math.cos(deg2rad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-
-  return distance.toFixed(2); // Distance rounded to 2 decimal places
-};
-
-//Function to get the Nearest Cadets with respect to a given user
-const nearestCadet = (user: User) => {
-  let cadets: any = [];
-  let shortestDistance = Number.MAX_SAFE_INTEGER;
-  let index = 0;
-  for (var i = 0; i < cadets.length; i++) {
-    let user_lat = JSON.parse(user.coordinates).latitude;
-    let user_long = JSON.parse(user.coordinates).longitude;
-    let cadet_lat = JSON.parse(cadets[i].coordinates).latitude;
-    let cadet_long = JSON.parse(cadets[i].coordinates).longitude;
-    let dist = parseFloat(
-      calculateDistance(user_lat, user_long, cadet_lat, cadet_long)
-    );
-
-    if (dist < shortestDistance) {
-      shortestDistance = dist;
-      index = i;
-    }
-    cadets[i].distance = dist;
-  }
-  // cadets.sort()
-  return cadets;
-};
-
-const getCadetUserId = async (userId: string) => {
-  const userRepo = AppDataSource.getRepository(User);
-  const user = await userRepo.findOne({
-    where: { user_id: userId },
-  });
-
-  const nearestCadets = await nearestCadet(user as User);
-  console.log(nearestCadets);
-
-  let firstBatch: any = [];
-  let secondBatch: any = [];
-  let thirdBatch: any = [];
-  for (let i = 0; i < nearestCadets.length; i++) {
-    if (nearestCadets[i].distance <= 5) {
-      firstBatch.push(nearestCadets[i].cadet_id);
-    } else if (
-      nearestCadets[i].distance > 5 &&
-      nearestCadets[i].distance <= 10
-    ) {
-      secondBatch.push(nearestCadets[i].cadet_id);
-    } else {
-      thirdBatch.push(nearestCadets[i].cadet_id);
-    }
-  }
-
-  console.log(nearestCadets);
-  console.log(firstBatch, secondBatch, thirdBatch);
-
-  return [firstBatch, secondBatch, thirdBatch];
-};
-
 const sendNotificationToCadets = async (
   registrationToken: string,
   userMessage: string,
@@ -125,23 +47,34 @@ const sendNotificationToCadets = async (
     });
 };
 
+interface CadetInfo {
+  user_id: string;
+  coordinates: string;
+  distance: number;
+}
+
 const sendSOS = async (req: any, res: any) => {
-  const userID: string = req.body.userID;
-  const userMessage: string = req.body.userMessage;
+  const data = req.data;
+  const userID = data.user_id
+  const cadet_ids: CadetInfo[] = data.cadet_ids
+
+  const userMessage = req.body.userMessage;
   const cadetRepo = AppDataSource.getRepository(User);
   const sosRequestRepo = AppDataSource.getRepository(SOSRequestInfo);
-  const createdAt: number = Date.now();
-  const sosData = { userID, userMessage, createdAt };
+  const createdAt = (Date.now()).toString();
+  const sosData = { userID: userID, userMessage: userMessage, createdAt: createdAt };
+  
   const sosSavedData1 = await sosRequestRepo.save(sosData);
   const sosId = sosSavedData1.sosRequest_ID;
 
-  let [firstBatch, secondBatch, thirdBatch] = await getCadetUserId(userID);
-
-  for (const cadet_id in firstBatch) {
+  console.log(`in sos notification`)
+  console.log(`userMessage: ${userMessage}`)
+  
+  for (const cadet_id in cadet_ids[0]) {
     const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
     sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
   }
-  await setTimeout(() => {
+  setTimeout(() => {
     // setting a timer for 30 sec and then allowing other set cadets to get notified
   }, 30 * 10e3);
 
@@ -150,7 +83,7 @@ const sendSOS = async (req: any, res: any) => {
   });
   let isAccepted = sosSavedData2?.isAccepted;
   if (!isAccepted) {
-    for (const cadet_id in secondBatch) {
+    for (const cadet_id in cadet_ids[1]) {
       const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
       sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
     }
@@ -158,7 +91,7 @@ const sendSOS = async (req: any, res: any) => {
     res.send("Request Send Successfully");
   }
 
-  await setTimeout(() => {
+  setTimeout(() => {
     // setting a timer for 30 sec and then allowing other set cadets to get notified
   }, 30 * 10e3);
 
@@ -167,7 +100,7 @@ const sendSOS = async (req: any, res: any) => {
   });
   isAccepted = sosSavedData3?.isAccepted;
   if (!isAccepted) {
-    for (const cadet_id in thirdBatch) {
+    for (const cadet_id in cadet_ids[2]) {
       const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
       sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
     }
@@ -180,10 +113,12 @@ const sendSOS = async (req: any, res: any) => {
 
 const acceptRequest = async (req: any, res: any) => {
     const sosRequestRepo = AppDataSource.getRepository(SOSRequestInfo);
-    const cadetID=req.body.cadetID;
-    const acceptedAt: number = Date.now();
+    const cadetID = req.user_id;
+    const acceptedAt = (Date.now()).toString();
     const isAccepted=true;
-    const sosData = {cadetID,isAccepted,acceptedAt};
+
+    const sosData = {cadetID: cadetID,isAccepted: isAccepted,acceptedAt: acceptedAt}
+
     const sosSavedData= await sosRequestRepo.update(req.body.sosId,sosData);
     res.send(sosSavedData);
 

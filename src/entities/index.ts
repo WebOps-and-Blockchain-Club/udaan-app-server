@@ -1,7 +1,9 @@
 import { Events } from "./events";
 import User from "./user";
 import OtpVerify from "./otpVerify";
-export default [Events, User, OtpVerify];
+import SOSRequestInfo from "./sosRequest";
+
+export default [Events, User, OtpVerify, SOSRequestInfo];
 
 
 
