@@ -30,16 +30,24 @@ app.use("/api/v1/sos",sosNotificationRoutes);
 
 app.put('/update', async(req:any, res:any) => {
   const userRepo = AppDataSource.getRepository(User)
-  const user = await userRepo.findOne({
-    where: { user_id: "407ccfb5-f12c-413e-9f07-b983e23cbcb2" }
+  let user = await userRepo.find({
+    where: { role: "cadet" }
   })
+  let index = 0;
+  while(user.length > index){
+    if(!user) return
+    user[index].fcmToken = "cc_NhIGbTBmemZMw8r2zCg:APA91bHVlC1hFJTwIpYIdy5i8NDeg5CDROyjMCZ-VWzGEnwkia680_a2phWpSEz22anmMDZhlDj6vLEPm4lyjXWY19CNRmsa-DCvlB9zXFvAyZ_ENkoctgjtNui9k49w7dfgwoimaNJ_"
+    await userRepo.save(user[index])
+    index++;
+  }
 
+  return res.send("edjgug")
   if(user){
-    const location = {latitude: 12.993006, longitude: 80.232651}
-    user.coordinates = JSON.stringify(location)
-    await userRepo.save(user)
+    // const location = {latitude: 12.993006, longitude: 80.232651}
+    // user.coordinates = JSON.stringify(location)
+    // await userRepo.save(user)
 
-    res.json({user})
+    // res.json({user})
   }
 
 })

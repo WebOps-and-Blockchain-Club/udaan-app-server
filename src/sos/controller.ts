@@ -32,7 +32,7 @@ const sendNotificationToCadets = async (
         sosRequest_ID:sosId,
     },
     token: registrationToken,
-  };
+  }
 
   // Send a message to the device corresponding to the provided
   // registration token.
@@ -56,7 +56,7 @@ interface CadetInfo {
 const sendSOS = async (req: any, res: any) => {
   const data = req.data;
   const userID = data.user_id
-  const cadet_ids: CadetInfo[] = data.cadet_ids
+  const cadet_ids: CadetInfo[][] = data.cadet_ids
 
   const userMessage = req.body.userMessage;
   const cadetRepo = AppDataSource.getRepository(User);
@@ -69,15 +69,21 @@ const sendSOS = async (req: any, res: any) => {
 
   console.log(`in sos notification`)
   console.log(`userMessage: ${userMessage}`)
-  
-  for (const cadet_id in cadet_ids[0]) {
-    const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
+  // return ;
+  // console.log(cadet_ids[0][0])
+  // for(let )
+  let index = 0;
+  while(index < cadet_ids[0].length){
+    console.log(cadet_ids[0][index].user_id);
+    const cadet = await cadetRepo.findOne({ where: { user_id: cadet_ids[0][index].user_id } });
     sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
-  }
+    index++;
+  }  
+  return res.json({message: "ekfjkgukyg"});
   setTimeout(() => {
     // setting a timer for 30 sec and then allowing other set cadets to get notified
   }, 30 * 10e3);
-
+  // return;
   const sosSavedData2 = await sosRequestRepo.findOne({
     where: { sosRequest_ID: sosId },
   });
@@ -99,9 +105,11 @@ const sendSOS = async (req: any, res: any) => {
     where: { sosRequest_ID: sosId },
   });
   isAccepted = sosSavedData3?.isAccepted;
+  console.log(cadet_ids);
   if (!isAccepted) {
     for (const cadet_id in cadet_ids[2]) {
       const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
+      
       sendNotificationToCadets(cadet!.fcmToken, userMessage,sosId);
     }
   } else {

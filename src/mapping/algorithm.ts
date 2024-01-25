@@ -163,7 +163,7 @@ const FindandMapCadets = async (req: any, res: any, next:any) => {
 
         //     batches.push(batch);
         // }
-
+        // console.log(cadetsList)
         req.data = {
             user_id: req.user_id,
             cadet_ids: [
