@@ -1,0 +1,50 @@
+
+> udaan-app-server@1.0.0 prod
+> node ./dist/app.js
+
+Server is running on http://65.2.38.110:3000
+
+> udaan-app-server@1.0.0 prod
+> node ./dist/app.js
+
+Server is running on http://65.2.38.110:3000
+Killed
+
+> udaan-app-server@1.0.0 prod
+> node ./dist/app.js
+
+Server is running on http://65.2.38.110:3000
+
+> udaan-app-server@1.0.0 prod
+> node ./dist/app.js
+
+Server is running on http://65.2.38.110:3000
+Killed
+
+> udaan-app-server@1.0.0 prod
+> node ./dist/app.js
+
+Server is running on http://65.2.38.110:3000
+
+> udaan-app-server@1.0.0 prod
+> node ./dist/app.js
+
+Server is running on http://65.2.38.110:3000
+Error: Error: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials c13-20020a170903234d00b001cf65844874sm1142974plh.45 - gsmtp
+    at SMTPConnection._formatError (/home/ubuntu/udaan-app-server/node_modules/nodemailer/lib/smtp-connection/index.js:790:19)
+    at SMTPConnection._actionAUTHComplete (/home/ubuntu/udaan-app-server/node_modules/nodemailer/lib/smtp-connection/index.js:1564:34)
+    at SMTPConnection.<anonymous> (/home/ubuntu/udaan-app-server/node_modules/nodemailer/lib/smtp-connection/index.js:546:26)
+    at SMTPConnection._processResponse (/home/ubuntu/udaan-app-server/node_modules/nodemailer/lib/smtp-connection/index.js:969:20)
+    at SMTPConnection._onData (/home/ubuntu/udaan-app-server/node_modules/nodemailer/lib/smtp-connection/index.js:755:14)
+    at SMTPConnection._onSocketData (/home/ubuntu/udaan-app-server/node_modules/nodemailer/lib/smtp-connection/index.js:193:44)
+    at TLSSocket.emit (node:events:514:28)
+    at addChunk (node:internal/streams/readable:545:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:495:3)
+    at Readable.push (node:internal/streams/readable:375:5) {
+  code: 'EAUTH',
+  response: '535-5.7.8 Username and Password not accepted. For more information, go to\n' +
+    '535 5.7.8  https://support.google.com/mail/?p=BadCredentials c13-20020a170903234d00b001cf65844874sm1142974plh.45 - gsmtp',
+  responseCode: 535,
+  command: 'AUTH PLAIN'
+}
