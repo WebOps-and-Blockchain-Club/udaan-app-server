@@ -72,7 +72,8 @@ app.post('/adduser', async (req, res) => {
 
 AppDataSource.initialize()
   .then(() => {
-    app.listen(port, '0.0.0.0',  () => {
+    // '0.0.0.0',
+    app.listen(port,  () => {
       console.log(`Server is running on http://65.2.38.110:${port}`);
     });
   })

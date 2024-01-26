@@ -2,56 +2,75 @@ import "reflect-metadata";
 import AppDataSource from "../config";
 import User from "../entities/user";
 import SOSRequestInfo from "../entities/sosRequest";
-import { initializeApp, applicationDefault } from "firebase-admin/app";
-import { getMessaging } from "firebase-admin/messaging";
 import { compareSync } from "bcrypt";
 
-// For recieving and sending SOS notification
-process.env.GOOGLE_APPLICATION_CREDENTIALS;
-initializeApp({
-  credential: applicationDefault(),
-  projectId: "ncc-udaan",
+import { initializeApp, applicationDefault } from "firebase-admin/app";
+import { getMessaging } from "firebase-admin/messaging";
+import express, { json } from "express";
+import cors from "cors";
+import admin from "firebase-admin";
+
+const app = express();
+app.use(express.json());
+
+app.use(
+  cors({
+    origin: "*",
+  })
+);
+
+app.use(
+  cors({
+    methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
+  })
+);
+
+app.use(function (req, res, next) {
+  res.setHeader("Content-Type", "application/json");
+  next();
 });
 
-const sendNotificationToCadets = async (
-  registrationToken: string,
-  userMessage: string,
-  sosId: string
-) => {
-  // This registration token comes from the client FCM SDKs.
+process.env.GOOGLE_APPLICATION_CREDENTIALS
+initializeApp({
+  credential: applicationDefault(),
+  projectId: "udaan-first-responder",
+});
+
+const sendNotificationToCade = async(req:any , res:any) => {
+  const receivedToken = req.body.fcmToken;
+
   const message = {
-    // notification: {
-    //   title: "SOS HELP REQUIRED",
-    //   body: `${userMessage == "" ? "URGENT HELP REQUIRED." : userMessage}`,
-    // },
-
-    data: {
-      title: "SOS HELP REQUIRED",
-      body: `${userMessage == "" ? "URGENT HELP REQUIRED." : userMessage}`,
-      sosRequest_ID: sosId,
+    notification: {
+      title: "Notif",
+      body: "This is a Test Notification",
     },
-    token: registrationToken,
-  }
+    token: receivedToken,
+  };
 
-  // Send a message to the device corresponding to the provided
-  // registration token.
-  try {
-
-
-    getMessaging()
-      .send(message)
-      .then((response) => {
-        // Response is a message ID string.
-        console.log("Successfully sent message:", response);
-      })
-      .catch((error) => {
-        throw Error(`Error sending message: ${error}`)
+  getMessaging()
+    .send(message)
+    .then((response) => {
+      res.status(200).json({
+        message: "Successfully sent message",
+        token: receivedToken,
       });
-  } catch (error) {
-    throw Error(`Error sending message: ${error}`)
-  }
+      console.log("Successfully sent message:", response);
+    })
+    .catch(err => {
+      console.error(err)
+    });
 };
 
+
+const sendNotificationToCadets = (h: string, f: any, l: string) => {
+  return console.log("erjkghfuytg")
+}
+
+
+
+
+
+////////////////////////////////////////////
 interface CadetInfo {
   user_id: string;
   coordinates: string;

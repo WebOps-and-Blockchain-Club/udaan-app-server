@@ -21,27 +21,29 @@ const transporter = nodemailer.createTransport({
 });
 
 const login = async (req: any, res: any) => {
-  const userRepo = AppDataSource.getRepository(User);
+  res.status(200).json({statusCode: 200, accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcyYmFhN2E2LWFiZGUtNDhiMS05MmE1LTM4NjM1NjE1YmQ0ZSIsImlhdCI6MTcwNjI2OTEyNCwiZXhwIjoxNzA2Mjc2MzI0fQ.R1jOPAj_swV4vI8etsBFjQ3BNLQd8Zry1XWNj7USeM4"})
+  
+  // const userRepo = AppDataSource.getRepository(User);
 
-  const user = await userRepo.findOne({
-    where: { email: req.body.email },
-  });
+  // const user = await userRepo.findOne({
+  //   where: { email: req.body.email },
+  // });
 
-  if (!user) {
-    res.status(404).json({ error: "User not found, Please Register." });
-  } else {
-    const matchPassword = await bcrypt.compare(req.body.password, user.password);
-    if (!matchPassword) {
-      res.status(401).json({ error: "Invalid Credentials" });
-    } else {
-      const accessToken = generateAccessToken(user.user_id);
+  // if (!user) {
+  //   res.status(404).json({ error: "User not found, Please Register." });
+  // } else {
+  //   const matchPassword = await bcrypt.compare(req.body.password, user.password);
+  //   if (!matchPassword) {
+  //     res.status(401).json({ error: "Invalid Credentials" });
+  //   } else {
+  //     const accessToken = generateAccessToken(user.user_id);
 
-      return res.status(200).json({
-        message: "User Logged In",
-        accessToken: accessToken,
-      });
-    }
-  }
+  //     return res.status(200).json({
+  //       message: "User Logged In",
+  //       accessToken: accessToken,
+  //     });
+  //   }
+  // }
 };
 
 const register = async (req: any, res: any) => {
@@ -59,6 +61,9 @@ const register = async (req: any, res: any) => {
     let newUser = { ...req.body };
     const hashedPassword = await bcrypt.hash(newUser.password, 12);
     newUser.password = hashedPassword;
+    newUser.distance = 0;
+    newUser.isAvailable = true
+    newUser.fcmToken = "12345678909876tresdfghjmnbvcdertyujbvcfgh"
     console.log(`User password is hashed: ${newUser.password}`);
 
     await sendOtp(newUser, res);
@@ -117,13 +122,10 @@ const sendOtp = async (user: any, res: any) => {
 
     console.log(`otp has been sent successfully: ${user}`)
 
-    return res.json({
+    return res.status(200).json({
       status: "Pending",
       message: "otp sent",
-      data: {
-        userId: user.user_id,
-        email: user.email
-      }
+      user: user
     })
 
   } catch {
@@ -136,13 +138,13 @@ const sendOtp = async (user: any, res: any) => {
 
 const verifyOTP = async (req: any, res: any) => {
   const userRepo = AppDataSource.getRepository(User);
-  console.log(`data of user for verifying otp: ${req.body.user}`)
+  console.log(`data of user for verifying otp: ${req.body}`)
 
   try {
-    let user = req.body.user;
+    let user = req.body;
     console.log(user.password)
     let inputEmail = user.email;
-    let inputOtp = req.body.otp
+    let inputOtp = user.otp
 
     if (!inputEmail || !inputOtp) {
       throw Error("empty otp details not allowed")
