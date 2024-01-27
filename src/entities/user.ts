@@ -33,6 +33,9 @@ export class User {
   city: string;
 
   @Column()
+  distance: number
+
+  @Column()
   fcmToken: string;
 }
 

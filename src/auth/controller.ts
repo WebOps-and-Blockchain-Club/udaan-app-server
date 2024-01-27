@@ -5,135 +5,73 @@ import User from "../entities/user";
 import OtpVerify from "../entities/otpVerify";
 import nodemailer from "nodemailer";
 
-const generateAccessToken = (user: User): String => {
-  const id = user.user_id;
+const generateAccessToken = (user_id: String) => {
+  const id = user_id;
   return jwt.sign({ id: id }, process.env.TOKEN_SECRET || "", {
-    expiresIn: "20s",
+    expiresIn: "2h",
   });
 };
 
-const generateRefreshToken = (user: User): String => {
-  const id = user.user_id;
-  return jwt.sign({ id: id }, process.env.REFRESH_TOKEN_SECRET || "");
-};
-
-let refreshTokens: any = [];
-
-const refresh = async (req: any, res: any) => {
-  const refreshToken = req.body.token;
-
-  if (!refreshToken)
-    return res.status(401).json({ message: "You are not authenticated." });
-  if (!refreshTokens.includes(refreshToken)) {
-    return res.status(403).json({ message: "Refresh token is not valid." });
-  }
-  jwt.verify(
-    refreshToken,
-    process.env.REFRESH_TOKEN_SECRET || "",
-    (err: any, user: any) => {
-      err && console.log(err);
-      refreshTokens = refreshTokens.filter((token: any) => {
-        token !== refreshToken;
-      });
-      const newAccessToken = generateAccessToken(user);
-      const newRefreshToken = generateRefreshToken(user);
-
-      refreshTokens.push(newRefreshToken);
-
-      res.status(200).json({
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      });
-    }
-  );
-};
-
-const login = async (req: any, res: any) => {
-  const userRepo = AppDataSource.getRepository(User);
-
-  const user = await userRepo.findOne({
-    where: { email: req.body.email },
-  });
-
-  if (!user || !user.verified) {
-    res.status(404).json({ error: "User not found, Please Register." });
-  } else {
-    const matchPassword = await bcrypt.compare(
-      req.body.password,
-      user.password
-    );
-    if (!matchPassword) {
-      res.status(404).json({ error: "Invalid Credentials" });
-    } else {
-      const accessToken = generateAccessToken(user);
-      const refreshToken = generateRefreshToken(user);
-
-      refreshTokens.push(refreshToken);
-      res.status(200).json({
-        message: "User Logged In",
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-      });
-    }
-  }
-};
-
-const register = async (req: any, res: any) => {
-  const userRepo = AppDataSource.getRepository(User)
-
-  const user = await userRepo.findOne({
-    where: { email: req.body.email },
-  });
-
-  if (user) {
-    if (user.verified) {
-      res.status(203).json({
-        message: "User already Registered, Please Login to your account",
-      });
-    } else {
-      res.status(202).json({
-        message: "User already exist, please verify",
-      });
-      const otp_Sent = sendOtp(user, res)
-      console.log(otp_Sent)
-    }
-
-  } else {
-    let user = { ...req.body };
-    const hashedpassword = await bcrypt.hash(user.password, 12);
-    user.password = hashedpassword;
-    await sendOtp(user, res)
-  }
-};
-
-const logout = (req: any, res: any) => {
-  const refreshToken = req.body.token;
-  refreshTokens = null;
-  return res.json({ message: "User logged out" });
-};
-
-// const transporter = nodemailer.createTransport({
-//   host: "smtp.ethereal.email",
-//   port: 587,
-//   auth: {
-//     user: process.env.AUTH_EMAIL,
-//     pass: process.env.AUTH_PASSWORD,
-//   },
-// });
 const transporter = nodemailer.createTransport({
-  // host: "gmail",
-  // port: 587,
-  // secure: true,
-  service:"gmail",
+  service: "gmail",
   auth: {
     user: process.env.AUTH_EMAIL,
     pass: process.env.AUTH_PASSWORD,
   },
 });
 
+const login = async (req: any, res: any) => {
+  // res.status(200).json({statusCode: 200, accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcyYmFhN2E2LWFiZGUtNDhiMS05MmE1LTM4NjM1NjE1YmQ0ZSIsImlhdCI6MTcwNjI2OTEyNCwiZXhwIjoxNzA2Mjc2MzI0fQ.R1jOPAj_swV4vI8etsBFjQ3BNLQd8Zry1XWNj7USeM4"})
+  
+  const userRepo = AppDataSource.getRepository(User);
+
+  const user = await userRepo.findOne({
+    where: { email: req.body.email },
+  });
+
+  if (!user) {
+    res.status(404).json({ error: "User not found, Please Register." });
+  } else {
+    const matchPassword = await bcrypt.compare(req.body.password, user.password);
+    if (!matchPassword) {
+      res.status(401).json({ error: "Invalid Credentials" });
+    } else {
+      const accessToken = generateAccessToken(user.user_id);
+
+      return res.status(200).json({
+        message: "User Logged In",
+        accessToken: accessToken,
+      });
+    }
+  }
+};
+
+const register = async (req: any, res: any) => {
+  const userRepo = AppDataSource.getRepository(User);
+
+  const existingUser = await userRepo.findOne({
+    where: { email: req.body.email },
+  });
+
+  if (existingUser) {
+    res.status(409).json({
+      error: "User already exists. Please login.",
+    });
+  } else {
+    let newUser = { ...req.body };
+    const hashedPassword = await bcrypt.hash(newUser.password, 12);
+    newUser.password = hashedPassword;
+    newUser.distance = 0;
+    newUser.isAvailable = true
+    newUser.fcmToken = "12345678909876tresdfghjmnbvcdertyujbvcfgh"
+    console.log(`User password is hashed: ${newUser.password}`);
+
+    await sendOtp(newUser, res);
+  }
+};
 
 const sendOtp = async (user: any, res: any) => {
-  // console.log(user)
+  console.log(`otp sent to this address: ${user}`)
   const otpRepo = AppDataSource.getRepository(OtpVerify)
 
   let userExist = await otpRepo.findOne({
@@ -141,11 +79,12 @@ const sendOtp = async (user: any, res: any) => {
   })
 
   if (userExist) {
-    await otpRepo.delete({email: user.email})
+    await otpRepo.delete({ email: user.email })
   }
 
   try {
     const otp = `${Math.floor(1000 + Math.random() * 9000)}`
+    console.log(`otp has been created: ${otp}`)
 
     const mailOptions = {
       from: process.env.USER_EMAIL,
@@ -167,11 +106,10 @@ const sendOtp = async (user: any, res: any) => {
       expiresAt: new Date(Date.now() + 3600000)
     }
 
-    // console.log(newOtp)
     try {
-      const otpsaved = await otpRepo.save(newOtp)
+      await otpRepo.save(newOtp)
     } catch (err) {
-      console.log(err)
+      console.error(err)
     }
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -182,37 +120,32 @@ const sendOtp = async (user: any, res: any) => {
       }
     });
 
-    // transporter.sendMail(mailOptions)
+    console.log(`otp has been sent successfully: ${user}`)
 
-    res.json({
+    return res.status(200).json({
       status: "Pending",
       message: "otp sent",
-      data: {
-        userId: user.user_id,
-        email: user.email
-      }
+      user: user
     })
 
   } catch {
-    res.json({
+    return res.status(404).json({
       status: "Failed",
       message: "otp sent"
     })
   }
 }
 
-
 const verifyOTP = async (req: any, res: any) => {
   const userRepo = AppDataSource.getRepository(User);
+  console.log(`data of user for verifying otp: ${req.body}`)
 
   try {
-    let user = req.body.user;
-    console.log(user)
+    let user = req.body;
+    console.log(user.password)
     let inputEmail = user.email;
-    let inputOtp = req.body.otp
+    let inputOtp = user.otp
 
-    console.log(inputEmail)
-    console.log(inputOtp)
     if (!inputEmail || !inputOtp) {
       throw Error("empty otp details not allowed")
     } else {
@@ -221,17 +154,16 @@ const verifyOTP = async (req: any, res: any) => {
       const userOtpVerification = await otpRepo.findOne({
         where: { email: inputEmail }
       })
-      console.log(userOtpVerification)
+
+      console.log(`user to be verified: ${userOtpVerification}`)
 
       if (!userOtpVerification) {
         throw new Error("Account record doesn't exist or verified")
       } else {
-        console.log("hh")
         const expiresAt = userOtpVerification.expiresAt
-        // const hashedOtp = userOtpVerification[0].otp
         const otp = userOtpVerification.otp
 
-        console.log(otp)
+        console.log(`otp in database: ${otp}`)
 
 
         if (expiresAt < new Date(Date.now())) {
@@ -252,12 +184,15 @@ const verifyOTP = async (req: any, res: any) => {
           } else {
             await otpRepo.delete({ email: inputEmail })
             await userRepo.save(user);
+            console.log(`user saved ${user}`)
 
-            res.send({
+            const accessToken = generateAccessToken(user.user_id);
+
+            res.status(201).send({
               status: "verified",
-              message: ({ message: "User Registered" })
+              message: ({ message: "User Registered" }),
+              accessToken: accessToken,
             })
-
           }
         }
       }
@@ -268,7 +203,6 @@ const verifyOTP = async (req: any, res: any) => {
     })
   }
 }
-
 
 const resendOTPVerificationCode = async (req: any, res: any) => {
   try {
@@ -295,10 +229,8 @@ const resendOTPVerificationCode = async (req: any, res: any) => {
 }
 
 export const controller = {
-  refresh,
   login,
   register,
-  logout,
   verifyOTP,
   resendOTPVerificationCode,
 };

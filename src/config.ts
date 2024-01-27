@@ -1,4 +1,4 @@
-import { DataSource } from "typeorm";
+import { DataSource } from "typeorm"
 import Tables from "./entities";
 import dotenv from "dotenv";
 dotenv.config()
