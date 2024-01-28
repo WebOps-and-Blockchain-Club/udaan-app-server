@@ -10,26 +10,6 @@ import express, { json } from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 
-// const app = express();
-// app.use(express.json());
-
-// app.use(
-//   cors({
-//     origin: "*",
-//   })
-// );
-
-// app.use(
-//   cors({
-//     methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
-//   })
-// );
-
-// app.use(function (req, res, next) {
-//   res.setHeader("Content-Type", "application/json");
-//   next();
-// });
-
 var serviceAccount = require(`${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
 
 admin.initializeApp({
@@ -38,22 +18,14 @@ admin.initializeApp({
   projectId: "ncc-udaan",
 });
 
-
-// process.env.GOOGLE_APPLICATION_CREDENTIALS
-// initializeApp({
-//   credential: applicationDefault(),
-//   projectId: "ncc-udaan",
-  
-// });
-
-const sendNotification = async(req:any , res:any) => {
-  const receivedToken = req.body.fcmToken;
+const sendNotification = async (fcmToken: any, userMessage: any, sosId: any) => {
+  const receivedToken = fcmToken;
   console.log(receivedToken);
 
   const message = {
     notification: {
-      title: "Notification",
-      body: "This is a Test Notification",
+      title: "Urgent help required!",
+      body: userMessage,
     },
     token: receivedToken,
   };
@@ -61,10 +33,11 @@ const sendNotification = async(req:any , res:any) => {
   getMessaging()
     .send(message)
     .then((response) => {
-      res.status(200).json({
-        message: "Successfully sent message",
-        token: receivedToken,
-      });
+      // res.status(200).json({
+      //   message: "Successfully sent message",
+      //   token: receivedToken,
+      // });
+
       console.log("Successfully sent message:", response);
     })
     .catch(err => {
@@ -72,16 +45,6 @@ const sendNotification = async(req:any , res:any) => {
     });
 };
 
-
-const sendNotificationToCadets = (h: string, f: any, l: string) => {
-  return console.log("erjkghfuytg")
-}
-
-
-
-
-
-////////////////////////////////////////////
 interface CadetInfo {
   user_id: string;
   coordinates: string;
@@ -89,11 +52,12 @@ interface CadetInfo {
 }
 
 const sendSOS = async (req: any, res: any) => {
+  const fcmfcm = "cWLDfjFaRDGK9C2jap5oTm:APA91bEvEtzVpUrmlEYu4FHTGqThR45FpT7KuPQkdgOJdtPGSW-mD2OZCEsj0HrZhPIARydSLfx5sBrYoL8tBLfKEwBLyt7UfSiRwGhgM8wCzoge7myalY6DLIMwage4li5nTptqWoOI"
   const data = req.data;
   const userID = data.user_id
   const cadet_ids: CadetInfo[][] = data.cadets
 
-  const userMessage = req.body.userMessage;
+  const userMessage: string = req.body.userMessage;
   const cadetRepo = AppDataSource.getRepository(User);
   const sosRequestRepo = AppDataSource.getRepository(SOSRequestInfo);
   const createdAt = (Date.now()).toString();
@@ -110,7 +74,10 @@ const sendSOS = async (req: any, res: any) => {
     let index = 0;
     while (index < cadet_ids[iterator].length && !isAccepted) {
       const cadet = await cadetRepo.findOne({ where: { user_id: cadet_ids[iterator][index].user_id } });
-      sendNotificationToCadets(cadet!.fcmToken, userMessage, sosId);
+      
+      if (cadet) {
+        sendNotification(cadet.fcmToken, userMessage, sosId)
+      }
 
       if (isAccepted) {
         return res.send("Request Send Successfully");

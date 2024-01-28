@@ -71,7 +71,7 @@ const register = async (req: any, res: any) => {
 };
 
 const sendOtp = async (user: any, res: any) => {
-  console.log(`otp sent to this address: ${user.email}`)
+  console.log(`otp sent to this address: ${user}`)
   const otpRepo = AppDataSource.getRepository(OtpVerify)
 
   let userExist = await otpRepo.findOne({
@@ -120,7 +120,7 @@ const sendOtp = async (user: any, res: any) => {
       }
     });
 
-    console.log(`otp has been sent successfully: ${user.email}`)
+    console.log(`otp has been sent successfully: ${user}`)
 
     return res.status(200).json({
       status: "Pending",
