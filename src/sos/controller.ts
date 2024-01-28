@@ -10,38 +10,49 @@ import express, { json } from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 
-const app = express();
-app.use(express.json());
+// const app = express();
+// app.use(express.json());
 
-app.use(
-  cors({
-    origin: "*",
-  })
-);
+// app.use(
+//   cors({
+//     origin: "*",
+//   })
+// );
 
-app.use(
-  cors({
-    methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
-  })
-);
+// app.use(
+//   cors({
+//     methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
+//   })
+// );
 
-app.use(function (req, res, next) {
-  res.setHeader("Content-Type", "application/json");
-  next();
+// app.use(function (req, res, next) {
+//   res.setHeader("Content-Type", "application/json");
+//   next();
+// });
+
+var serviceAccount = require(`${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://ncc-udaan-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ncc-udaan",
 });
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS
-initializeApp({
-  credential: applicationDefault(),
-  projectId: "udaan-first-responder",
-});
 
-const sendNotificationToCade = async(req:any , res:any) => {
+// process.env.GOOGLE_APPLICATION_CREDENTIALS
+// initializeApp({
+//   credential: applicationDefault(),
+//   projectId: "ncc-udaan",
+  
+// });
+
+const sendNotification = async(req:any , res:any) => {
   const receivedToken = req.body.fcmToken;
+  console.log(receivedToken);
 
   const message = {
     notification: {
-      title: "Notif",
+      title: "Notification",
       body: "This is a Test Notification",
     },
     token: receivedToken,
@@ -140,6 +151,7 @@ const acceptRequest = async (req: any, res: any) => {
 export const controller = {
   sendSOS,
   acceptRequest,
+  sendNotification
 };
 
 
