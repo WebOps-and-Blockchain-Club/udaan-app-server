@@ -115,7 +115,11 @@ const sendSOS = async (req: any, res: any) => {
   }
 
   return res.json({
-    data: req.data.cadets,
+    data: {
+      "5km": req.data.cadets[0],
+      "10km": req.data.cadets[1],
+      "more": req.data.cadets[2]
+    },
     message: "message can be sent successfully now, need to integrate notification"
   })
 }

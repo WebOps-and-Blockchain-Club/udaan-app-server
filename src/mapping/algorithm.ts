@@ -81,9 +81,6 @@ const FindandMapCadets = async (req: any, res: any, next: any) => {
         let cadets10km: string[] = [];
         let cadetsmore: string[] = [];
 
-        // list of cadets nearby city-wise
-        let cadetsList: CadetInfo[][] = []
-
         // list of ccadets in a city
         let cadets: CadetInfo[] = [];
 
@@ -100,7 +97,6 @@ const FindandMapCadets = async (req: any, res: any, next: any) => {
         });
 
         if (cadetsClosest) {
-            cadetsList.push(cadetsClosest);
             distancesFromUser(user, cadetsClosest, cadets5km, cadets10km, cadetsmore)
         }
 
@@ -141,14 +137,13 @@ const FindandMapCadets = async (req: any, res: any, next: any) => {
                 });
 
                 if (cadets) {
-                    cadetsList.push(cadets);
                     distancesFromUser(user, cadets, cadets5km, cadets10km, cadetsmore)
                 }
 
                 index++;
             }
-
-            if (!cadetsList) {
+            
+            if (!cadets5km && !cadets10km && !cadetsmore) {
                 maxSearches += 10;
             } else {
                 foundEnoughData = true;
@@ -156,20 +151,13 @@ const FindandMapCadets = async (req: any, res: any, next: any) => {
         }
 
         // enough cadets are found till this line of code.
-        if (cadetsList.length == 0) {
+        if (!cadets5km && !cadets10km && !cadetsmore) {
             // we can fetch more cities list but for now it is giving 100 cities data, and i think that would be enough, if not we can choose a location may be at the fatherst city in the current list and fetch nearby-cities from that location.
             return res.status(404).json({ error: `No Cadets found in nearby ${nearbyCities.length} cities` });
         }
 
         req.data = {
             user_id: req.user_id,
-            cadet_ids: [
-                cadetsList[0],
-                cadetsList[1],
-                cadetsList[2],
-                cadetsList[3],
-                cadetsList[4]
-            ],
             cadets: [
                 cadets5km,
                 cadets10km,
