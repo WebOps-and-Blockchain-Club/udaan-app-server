@@ -2,7 +2,6 @@ import AppDataSource from "../config";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "../entities/user";
-import OtpVerify from "../entities/otpVerify";
 import nodemailer from "nodemailer";
 
 const generateAccessToken = (user_id: String) => {
@@ -64,7 +63,6 @@ const register = async (req: any, res: any) => {
 };
 
 const sendOtp = async (email: any, res: any) => {
-  const otpRepo = AppDataSource.getRepository(OtpVerify)
 
   try {
     const otp = `${Math.floor(1000 + Math.random() * 9000)}`
@@ -96,7 +94,7 @@ const sendOtp = async (email: any, res: any) => {
       message: "otp sent",
       otp: hashedOtp,
       now: Date.now()
-    })  
+    })
 
   } catch {
     return res.status(401).json({
@@ -148,17 +146,14 @@ const resendOTPVerificationCode = async (req: any, res: any) => {
     let userId = req.body.userId
     let inputEmail = req.body.inputEmail
 
+    const token = req.body.jwt;
+    const payload: JwtPayload = jwt.verify(token, process.env.OTP_SECRET!) as JwtPayload
+    const user: User = { ...payload.user };
+
     if (!userId || !inputEmail) {
       throw Error("empty otp details not allowed")
     } else {
-      const otpRepo = AppDataSource.getRepository(OtpVerify)
-      await otpRepo.delete({ email: inputEmail })
-      const user = {
-        user_id: userId,
-        email: inputEmail
-      }
-      console.log(user)
-      await sendOtp(user, res)
+      await sendOtp(user.email, res);
     }
   } catch (error) {
     res.json({
