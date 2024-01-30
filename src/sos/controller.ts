@@ -52,7 +52,6 @@ interface CadetInfo {
 }
 
 const sendSOS = async (req: any, res: any) => {
-  const fcmfcm = "cWLDfjFaRDGK9C2jap5oTm:APA91bEvEtzVpUrmlEYu4FHTGqThR45FpT7KuPQkdgOJdtPGSW-mD2OZCEsj0HrZhPIARydSLfx5sBrYoL8tBLfKEwBLyt7UfSiRwGhgM8wCzoge7myalY6DLIMwage4li5nTptqWoOI"
   const data = req.data;
   const userID = data.user_id
   const cadet_ids: CadetInfo[][] = data.cadets
@@ -74,7 +73,7 @@ const sendSOS = async (req: any, res: any) => {
     let index = 0;
     while (index < cadet_ids[iterator].length && !isAccepted) {
       const cadet = await cadetRepo.findOne({ where: { user_id: cadet_ids[iterator][index].user_id } });
-      
+       
       if (cadet) {
         sendNotification(cadet.fcmToken, userMessage, sosId)
       }
@@ -99,65 +98,19 @@ const sendSOS = async (req: any, res: any) => {
 }
 
 // A data base can be made for the sos request containing the
-
 const acceptRequest = async (req: any, res: any) => {
   const sosRequestRepo = AppDataSource.getRepository(SOSRequestInfo);
   const cadetID = req.user_id;
   const acceptedAt = (Date.now()).toString();
   const isAccepted = true;
 
-  // let sosData = {};
-  // sosData.
-
-  // const sosSavedData= await sosRequestRepo.update(req.body.sosId,sosData);
-  // res.send(sosSavedData);
-
   // TODO SET UP A SOCKET 
 };
+
+
 
 export const controller = {
   sendSOS,
   acceptRequest,
   sendNotification
 };
-
-
-
-
-
-
-
-
-
-//   const sosSavedData2 = await sosRequestRepo.findOne({
-//     where: { sosRequest_ID: sosId },
-//   });
-//   let isAccepted = sosSavedData2?.isAccepted;
-//   if (!isAccepted) {
-//     for (const cadet_id in cadet_ids[1]) {
-//       const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
-//       sendNotificationToCadets(cadet!.fcmToken, userMessage, sosId);
-//     }
-//   } else {
-//     res.send("Request Send Successfully");
-//   }
-
-//   setTimeout(() => {
-//     // setting a timer for 30 sec and then allowing other set cadets to get notified
-//   }, 30 * 10e3);
-
-//   const sosSavedData3 = await sosRequestRepo.findOne({
-//     where: { sosRequest_ID: sosId },
-//   });
-//   isAccepted = sosSavedData3?.isAccepted;
-//   console.log(cadet_ids);
-//   if (!isAccepted) {
-//     for (const cadet_id in cadet_ids[2]) {
-//       const cadet = await cadetRepo.findOne({ where: { user_id: cadet_id } });
-
-//       sendNotificationToCadets(cadet!.fcmToken, userMessage, sosId);
-//     }
-//   } else {
-//     res.send("Request Send Successfully");
-//   }
-// }
