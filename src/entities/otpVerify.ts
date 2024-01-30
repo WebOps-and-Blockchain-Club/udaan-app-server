@@ -15,7 +15,7 @@ export class OtpVerify {
     createdAt:Date;
 
     @Column()
-    expiresAt:Date;   
+    expiresAt:Date;
 }
 
 export default OtpVerify;

@@ -85,19 +85,26 @@ const FindandMapCadets = async (req: any, res: any, next: any) => {
         let cadets: CadetInfo[] = [];
 
         // cadets in the same city as user's.
-        let cadetsClosest: CadetInfo[] = []
-
+        let fetchCadet: User[] = []
+        
         // fetching cadets data in the same city as the user
-        cadetsClosest = await userRepo.find({
+        fetchCadet = await userRepo.find({
             where: {
                 city: user.city,
                 role: 'cadet'
             },
-            select: ["user_id", "distance", "coordinates"]
+            select: ["user_id", "coordinates"]
         });
 
-        if (cadetsClosest) {
-            distancesFromUser(user, cadetsClosest, cadets5km, cadets10km, cadetsmore)
+        for(let i=0 ; i<fetchCadet.length ; i++) {
+            cadets.push({
+                ...fetchCadet[i],
+                distance: 0
+            })
+        }
+
+        if (cadets) {
+            distancesFromUser(user, cadets, cadets5km, cadets10km, cadetsmore)
         }
 
         // if no cadets in same city as user's, serarching cadets in nearby cities.
@@ -132,9 +139,18 @@ const FindandMapCadets = async (req: any, res: any, next: any) => {
 
         while (!foundEnoughData && nearbyCities.length >= maxSearches) {
             while (index <= maxSearches) {
-                cadets = await userRepo.find({
+                fetchCadet = await userRepo.find({
                     where: { city: nearbyCities[index].name }
                 });
+
+                cadets = []
+
+                for(let i=0 ; i<fetchCadet.length ; i++) {
+                    cadets.push({
+                        ...fetchCadet[i],
+                        distance: 0
+                    })
+                }
 
                 if (cadets) {
                     distancesFromUser(user, cadets, cadets5km, cadets10km, cadetsmore)
@@ -142,7 +158,7 @@ const FindandMapCadets = async (req: any, res: any, next: any) => {
 
                 index++;
             }
-            
+
             if (!cadets5km && !cadets10km && !cadetsmore) {
                 maxSearches += 10;
             } else {
