@@ -14,8 +14,8 @@ var serviceAccount = require(`${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://ncc-udaan-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ncc-udaan",
+  databaseURL: process.env.DATABASE_URL,
+  projectId: process.env.PROJECT_ID,
 });
 
 const sendNotification = async (fcmToken: any, userMessage: any, sosId: any) => {
