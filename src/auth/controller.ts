@@ -2,7 +2,6 @@ import AppDataSource from "../config";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "../entities/user";
-import OtpVerify from "../entities/otpVerify";
 import nodemailer from "nodemailer";
 
 const generateAccessToken = (user_id: String) => {
@@ -28,15 +27,20 @@ const login = async (req: any, res: any) => {
   const user = await userRepo.findOne({
     where: { email: req.body.email },
   });
-
+  console.log(req.body)
   if (!user) {
     res.status(404).json({ error: "User not found, Please Register." });
   } else {
+    console.log(req.body)
     const matchPassword = await bcrypt.compare(req.body.password, user.password);
     if (!matchPassword) {
       res.status(401).json({ error: "Invalid Credentials" });
     } else {
+      let latitude = req.body.coordinates.split(" ")[0];
+      let longitude = req.body.coordinates.split(" ")[1];
+      user.coordinates = JSON.stringify({ latitude: latitude, longitude: longitude });
       const accessToken = generateAccessToken(user.user_id);
+      await userRepo.update(user.user_id, user);
 
       return res.status(200).json({
         message: "User Logged In",
@@ -54,7 +58,7 @@ const register = async (req: any, res: any) => {
   });
 
   if (existingUser) {
-    res.status(409).json({
+    return res.status(409).json({
       error: "User already exists. Please login.",
     });
   } else {
@@ -64,7 +68,6 @@ const register = async (req: any, res: any) => {
 };
 
 const sendOtp = async (email: any, res: any) => {
-  const otpRepo = AppDataSource.getRepository(OtpVerify)
 
   try {
     const otp = `${Math.floor(1000 + Math.random() * 9000)}`
@@ -92,11 +95,9 @@ const sendOtp = async (email: any, res: any) => {
     console.log(`otp has been sent successfully`);
 
     return res.status(200).json({
-      status: "Pending",
-      message: "otp sent",
       otp: hashedOtp,
       now: Date.now()
-    })  
+    })
 
   } catch {
     return res.status(401).json({
@@ -109,18 +110,19 @@ const sendOtp = async (email: any, res: any) => {
 const verifyOTP = async (req: any, res: any) => {
   const userRepo = AppDataSource.getRepository(User);
 
-  const token = req.body.jwt;
-  const payload: JwtPayload = jwt.verify(token, process.env.OTP_SECRET!) as JwtPayload
-  const user: User = { ...payload.user };
-
-
+  const data = req.body;
+  const user: User = { ...data };
+  
   try {
     if (!user) {
       throw Error("empty otp details not allowed")
     } else {
-      user.coordinates = JSON.stringify({ latitude: payload.user.latitude, longitude: payload.user.longitude });
-
+      
       try {
+        let latitude = data.coordinates.split(" ")[0];
+        let longitude = data.coordinates.split(" ")[1];
+        user.coordinates = JSON.stringify({ latitude: latitude, longitude: longitude });
+        
         await userRepo.save(user);
 
         const accessToken = generateAccessToken(user.user_id);
@@ -148,17 +150,14 @@ const resendOTPVerificationCode = async (req: any, res: any) => {
     let userId = req.body.userId
     let inputEmail = req.body.inputEmail
 
+    const token = req.body.jwt;
+    const payload: JwtPayload = jwt.verify(token, process.env.OTP_SECRET!) as JwtPayload
+    const user: User = { ...payload.user };
+
     if (!userId || !inputEmail) {
       throw Error("empty otp details not allowed")
     } else {
-      const otpRepo = AppDataSource.getRepository(OtpVerify)
-      await otpRepo.delete({ email: inputEmail })
-      const user = {
-        user_id: userId,
-        email: inputEmail
-      }
-      console.log(user)
-      await sendOtp(user, res)
+      await sendOtp(user.email, res);
     }
   } catch (error) {
     res.json({
@@ -173,3 +172,4 @@ export const controller = {
   verifyOTP,
   resendOTPVerificationCode,
 };
+
