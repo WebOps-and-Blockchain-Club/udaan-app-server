@@ -11,7 +11,7 @@ const AppDataSource = new DataSource({
     database: "udaanapp",
     entities: Tables,
     synchronize: true,
-    logging: true
+    // logging: true
 });
 
 export default AppDataSource;
